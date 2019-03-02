@@ -33,7 +33,7 @@ func main() {
 	dev := devs[0]
 
 	// Switch the configuration to #2.
-	cfg, err := dev.Config(2)
+	cfg, err := dev.Config(1)
 	if err != nil {
 		log.Fatalf("%s.Config(2): %v", dev, err)
 	}
