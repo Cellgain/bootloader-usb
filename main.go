@@ -40,7 +40,7 @@ func main() {
 	defer cfg.Close()
 
 	// In the config #2, claim interface #3 with alt setting #0.
-	intf, err := cfg.Interface(3, 0)
+	intf, err := cfg.Interface(0, 0)
 	if err != nil {
 		log.Fatalf("%s.Interface(3, 0): %v", cfg, err)
 	}
