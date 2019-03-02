@@ -31,6 +31,7 @@ func main() {
 
 	// Pick the first device found.
 	dev := devs[0]
+	dev.SetAutoDetach(true)
 
 	// Switch the configuration to #2.
 	cfg, err := dev.Config(1)
