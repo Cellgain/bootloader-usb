@@ -40,11 +40,11 @@ func main() {
 	defer cfg.Close()
 
 	// In the config #2, claim interface #3 with alt setting #0.
-	intf, err := cfg.Interface(0, 0)
+	intf, done, err := dev.DefaultInterface()
 	if err != nil {
 		log.Fatalf("%s.Interface(3, 0): %v", cfg, err)
 	}
-	defer intf.Close()
+	defer done()
 
 	// In this interface open endpoint #6 for reading.
 	epIn, err := intf.InEndpoint(2)
