@@ -1,0 +1,11 @@
+{
+	"ImportPath": "cellgain.ddns.net/cellgain-public/bootloaderHostUSB",
+	"GoVersion": "go1.11",
+	"GodepVersion": "v80",
+	"Deps": [
+		{
+			"ImportPath": "github.com/google/gousb",
+			"Rev": "15d2fa288b980753664eb6b347a8c7aca052b667"
+		}
+	]
+}
