@@ -9,10 +9,10 @@ import (
 )
 
 func main() {
-	frame := []byte{0x01,0x38,0x06,0xCA,0xFE,0x00,0x00,0xCA,0xFE,0x00,0x00}
+	frame := []byte{0x01,0x38,0x06,0xCA,0xFE,0x00,0x00,0xCA,0xFE,0x00,0x00,0x17}
 
-	frame[9] = byte(crc16.ChecksumCCITT(frame[:len(frame)-2])>>8)
-	frame[10] = byte(crc16.ChecksumCCITT(frame[:len(frame)-2]) & 0xff)
+	frame[9] = byte(crc16.ChecksumCCITT(frame[:len(frame)-2]))
+	frame[10] = byte(crc16.ChecksumCCITT(frame[:len(frame)-2]) >> 8)
 	log.Println(hex.EncodeToString(frame))
 
 	// Initialize a new Context.
