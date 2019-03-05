@@ -1,12 +1,20 @@
 package main
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/google/gousb"
+	"github.com/howeyc/crc16"
 	"log"
 )
 
 func main() {
+	frame := []byte{0x01,0x38,0x06,0xCA,0xFE,0x00,0x00,0xCA,0xFE,0x00,0x00}
+
+	frame[9] = byte(crc16.ChecksumCCITT(frame[:len(frame)-2])>>8)
+	frame[10] = byte(crc16.ChecksumCCITT(frame[:len(frame)-2]) & 0xff)
+	log.Println(hex.EncodeToString(frame))
+
 	// Initialize a new Context.
 	ctx := gousb.NewContext()
 	defer ctx.Close()
@@ -63,7 +71,8 @@ func main() {
 	buf := make([]byte, 10*epIn.Desc.MaxPacketSize)
 
 	// writeBytes might be smaller than the buffer size if an error occurred. writeBytes might be greater than zero even if err is not nil.
-	writeBytes, err := epOut.Write([]byte{0x01,0x3c,0x01,0x00,0x3e,0x17})
+
+	writeBytes, err := epOut.Write(frame)
 	if err != nil {
 		fmt.Println("Write returned an error:", err)
 	}
