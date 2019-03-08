@@ -2,34 +2,31 @@ package main
 
 import (
 	"encoding/hex"
-	"fmt"
 	"github.com/google/gousb"
-	"github.com/howeyc/crc16"
 	"log"
+	"time"
 )
 
-/*
-    frame := []uint8{0x01,0x38,0x06,0x00,0xCA,0xFE,0x00,0x00,0xCA,0xFE,0x31,0xfc,0x17}
-	
+func calcChecksum(frame []byte) (uint8,uint8){
 	var sum uint = 0
-	size:= len(frame) - 3
-	fmt.Printf("size: %d\r\n", size)
-	
-      	for _, f:= range frame[:len(frame)-3]{
-	    	fmt.Printf("%.04x,", f)
+
+	for _, f:= range frame[:len(frame)-3]{
 		sum += uint(f)
 	}
 
-    	fmt.Printf("%.04x\r\n", sum)
-    	fmt.Printf("%.04x\r\n", sum ^ 0xffff)
-	fmt.Printf("%.04x\r\n", 1 + (0xffff^sum))
-*/
-func main() {
-	frame := []byte{0x01,0x38,0x00,0x06,0xCA,0xFE,0x00,0x00,0xCA,0xFE,0x00,0x00,0x17}
+	result := 1 + (0xffff^sum)
 
-	frame[10] = byte(crc16.ChecksumCCITT(frame[:len(frame)-2]))
-	frame[11] = byte(crc16.ChecksumCCITT(frame[:len(frame)-2]) >> 8)
-	log.Println(hex.EncodeToString(frame))
+	return uint8(result >> 8), uint8(result & 0xff)
+}
+
+func main() {
+	enterBootloader := []byte{0x01,0x38,0x00,0x06,0xCA,0xFE,0x00,0x00,0xCA,0xFE,0x00,0x00,0x17}
+	enterBootloader[10], enterBootloader[11] = calcChecksum(enterBootloader)
+	log.Println(hex.EncodeToString(enterBootloader))
+
+	exitBootloader := []byte{0x01,0x3B,0x00,0x00,0x00,0x00,0x17}
+	exitBootloader[4], exitBootloader[5] = calcChecksum(exitBootloader)
+	log.Println(hex.EncodeToString(exitBootloader))
 
 	// Initialize a new Context.
 	ctx := gousb.NewContext()
@@ -71,38 +68,57 @@ func main() {
 	}
 	defer done()
 
-	// In this interface open endpoint #6 for reading.
+	// In this interface open endpoint #2 for reading.
 	epIn, err := intf.InEndpoint(2)
 	if err != nil {
 		log.Fatalf("%s.InEndpoint(2): %v", intf, err)
 	}
 
-	// And in the same interface open endpoint #5 for writing.
+	// And in the same interface open endpoint #1 for writing.
 	epOut, err := intf.OutEndpoint(1)
 	if err != nil {
 		log.Fatalf("%s.OutEndpoint(1): %v", intf, err)
 	}
 
-	// Buffer large enough for 10 USB packets from endpoint 6.
-	buf := make([]byte, 10*epIn.Desc.MaxPacketSize)
-
 	// writeBytes might be smaller than the buffer size if an error occurred. writeBytes might be greater than zero even if err is not nil.
 
-	writeBytes, err := epOut.Write(frame)
+	writeBytes, err := epOut.Write(enterBootloader)
 	if err != nil {
-		fmt.Println("Write returned an error:", err)
+		log.Println("Write returned an error:", err)
 	}
 
 	log.Printf("Bytes wrote: %d\r\n", writeBytes)
 
+	// Buffer large enough for 10 USB packets from endpoint 2.
+	buf := make([]byte, 10*epIn.Desc.MaxPacketSize)
 	readBytes, err := epIn.Read(buf)
 	if err != nil {
-		fmt.Println("Read returned an error:", err)
+		log.Println("Read returned an error:", err)
 	}
 	if readBytes == 0 {
 		log.Fatalf("IN endpoint 6 returned 0 bytes of data.")
 	}
 
-	fmt.Println(readBytes)
+	time.Sleep(time.Second * 5)
+
+	writeBytes, err = epOut.Write(exitBootloader)
+	if err != nil {
+		log.Println("Write returned an error:", err)
+	}
+
+	log.Printf("Bytes wrote: %d\r\n", writeBytes)
+
+
+	// Buffer large enough for 10 USB packets from endpoint 2.
+	buf = make([]byte, 10*epIn.Desc.MaxPacketSize)
+	readBytes, err = epIn.Read(buf)
+	if err != nil {
+		log.Println("Read returned an error:", err)
+	}
+	if readBytes == 0 {
+		log.Fatalf("IN endpoint 6 returned 0 bytes of data.")
+	}
+
+	log.Println(readBytes)
 
 }
