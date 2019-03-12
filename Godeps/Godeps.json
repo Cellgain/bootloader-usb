@@ -6,10 +6,6 @@
 		{
 			"ImportPath": "github.com/google/gousb",
 			"Rev": "15d2fa288b980753664eb6b347a8c7aca052b667"
-		},
-		{
-			"ImportPath": "github.com/howeyc/crc16",
-			"Rev": "2b2a61e366a66d3efb279e46176e7291001e0354"
 		}
 	]
 }
