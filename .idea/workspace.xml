@@ -2,18 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c23bb4e4-6603-4686-9fb8-fdd41af1df24" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/bin/beaglebone_linux" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/bootloader_usb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/cybootloader_protocol/commands.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/usb/comunication.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cyacdParse/parse.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cyacdParse/row.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Godeps/Godeps.json" beforeDir="false" afterPath="$PROJECT_DIR$/Godeps/Godeps.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/bootloader_usb" beforeDir="false" afterPath="$PROJECT_DIR$/bootloader_usb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cybootloader_protocol/commands.go" beforeDir="false" afterPath="$PROJECT_DIR$/cybootloader_protocol/commands.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/vendor/github.com/howeyc/crc16/.travis.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/vendor/github.com/howeyc/crc16/LICENSE" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/vendor/github.com/howeyc/crc16/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/vendor/github.com/howeyc/crc16/crc16.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/vendor/github.com/howeyc/crc16/hash.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/usb/comunication.go" beforeDir="false" afterPath="$PROJECT_DIR$/usb/comunication.go" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -26,20 +21,29 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/main.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="537">
-              <caret line="52" column="6" selection-start-line="52" selection-start-column="6" selection-end-line="52" selection-end-column="6" />
+            <state relative-caret-position="1080">
+              <caret line="108" column="46" lean-forward="true" selection-start-line="108" selection-start-column="46" selection-end-line="108" selection-end-column="46" />
               <folding>
-                <element signature="e#14#82#0" expanded="true" />
+                <element signature="e#14#286#0" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/vendor/github.com/google/gousb/config.go">
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/cyacdParse/parse.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="237">
-              <caret line="77" column="17" selection-start-line="77" selection-start-column="17" selection-end-line="77" selection-end-column="17" />
+            <state relative-caret-position="585">
+              <caret line="68" selection-start-line="68" selection-end-line="68" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/cyacdParse/row.go">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="174">
+              <caret line="14" selection-start-line="14" selection-end-line="14" />
             </state>
           </provider>
         </entry>
@@ -47,8 +51,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/usb/comunication.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="283">
-              <caret line="67" selection-start-line="67" selection-end-line="67" />
+            <state relative-caret-position="253">
+              <caret line="65" selection-start-line="65" selection-end-line="65" />
               <folding>
                 <element signature="e#13#57#0" expanded="true" />
               </folding>
@@ -56,13 +60,13 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/cybootloader_protocol/commands.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="264">
-              <caret line="126" column="25" lean-forward="true" selection-start-line="126" selection-start-column="25" selection-end-line="126" selection-end-column="25" />
+            <state relative-caret-position="354">
+              <caret line="277" selection-start-line="277" selection-end-line="277" />
               <folding>
-                <element signature="e#31#64#0" expanded="true" />
+                <element signature="e#31#53#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -93,9 +97,12 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
+        <option value="$PROJECT_DIR$/cyacdParse/Row.go" />
+        <option value="$PROJECT_DIR$/cyacdParse/parse.go" />
+        <option value="$PROJECT_DIR$/cyacdParse/row.go" />
         <option value="$PROJECT_DIR$/usb/comunication.go" />
-        <option value="$PROJECT_DIR$/main.go" />
         <option value="$PROJECT_DIR$/cybootloader_protocol/commands.go" />
+        <option value="$PROJECT_DIR$/main.go" />
       </list>
     </option>
   </component>
@@ -121,7 +128,7 @@
             <path>
               <item name="bootloader-usb" type="b2602c69:ProjectViewProjectNode" />
               <item name="bootloader-usb" type="462c0819:PsiDirectoryNode" />
-              <item name="usb" type="462c0819:PsiDirectoryNode" />
+              <item name="cyacdParse" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -138,6 +145,7 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$/bin" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+    <property name="restartRequiresConfirmation" value="false" />
     <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
   </component>
   <component name="RunDashboard">
@@ -184,6 +192,7 @@
       <module name="bootloader-usb" />
       <working_directory value="$PROJECT_DIR$/" />
       <go_parameters value="-i" />
+      <parameters value="-path=$USER_HOME$/Descargas/CGW-MOD-100-REV1-V0105.cyacd" />
       <kind value="PACKAGE" />
       <filePath value="$PROJECT_DIR$/|$PROJECT_DIR$/main.go" />
       <package value="cellgain.ddns.net/cellgain-public/bootloader-usb" />
@@ -206,16 +215,16 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="65" y="-4" width="1855" height="1084" extended-state="6" />
+    <frame x="64" y="-11" width="1857" height="1092" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.17855169" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.18297403" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info anchor="bottom" id="Run" order="2" weight="0.2277952" />
-      <window_info active="true" anchor="bottom" id="Debug" order="3" visible="true" weight="0.39916405" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.25600836" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.39916405" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.3295099" />
@@ -237,18 +246,6 @@
     <ignored-roots>
       <path value="$PROJECT_DIR$/bootloader-usb" />
     </ignored-roots>
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/cybootloader_protocol/commands.go</url>
-          <line>126</line>
-          <properties />
-          <option name="timeStamp" value="4" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/../../../github.com/howeyc/crc16/crc16.go">
@@ -288,25 +285,36 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/vendor/github.com/google/gousb/config.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="237">
+        <state relative-caret-position="552">
           <caret line="77" column="17" selection-start-line="77" selection-start-column="17" selection-end-line="77" selection-end-column="17" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/main.go">
+    <entry file="file:///usr/local/go/src/runtime/panic.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="537">
-          <caret line="52" column="6" selection-start-line="52" selection-start-column="6" selection-end-line="52" selection-end-column="6" />
-          <folding>
-            <element signature="e#14#82#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="10140">
+          <caret line="680" selection-start-line="680" selection-end-line="680" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/local/go/src/builtin/builtin.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="227">
+          <caret line="133" column="5" selection-start-line="133" selection-start-column="5" selection-end-line="133" selection-end-column="5" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cyacdParse/row.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="174">
+          <caret line="14" selection-start-line="14" selection-end-line="14" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/usb/comunication.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="283">
-          <caret line="67" selection-start-line="67" selection-end-line="67" />
+        <state relative-caret-position="253">
+          <caret line="65" selection-start-line="65" selection-end-line="65" />
           <folding>
             <element signature="e#13#57#0" expanded="true" />
           </folding>
@@ -315,11 +323,28 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/cybootloader_protocol/commands.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="264">
-          <caret line="126" column="25" lean-forward="true" selection-start-line="126" selection-start-column="25" selection-end-line="126" selection-end-column="25" />
+        <state relative-caret-position="354">
+          <caret line="277" selection-start-line="277" selection-end-line="277" />
           <folding>
-            <element signature="e#31#64#0" expanded="true" />
+            <element signature="e#31#53#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/main.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1080">
+          <caret line="108" column="46" lean-forward="true" selection-start-line="108" selection-start-column="46" selection-end-line="108" selection-end-column="46" />
+          <folding>
+            <element signature="e#14#286#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/cyacdParse/parse.go">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="585">
+          <caret line="68" selection-start-line="68" selection-end-line="68" />
         </state>
       </provider>
     </entry>

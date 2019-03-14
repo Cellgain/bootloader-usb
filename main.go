@@ -1,15 +1,26 @@
 package main
 
 import (
+	"cellgain.ddns.net/cellgain-public/bootloader-usb/cyacdParse"
 	"cellgain.ddns.net/cellgain-public/bootloader-usb/cybootloader_protocol"
 	"cellgain.ddns.net/cellgain-public/bootloader-usb/usb"
+	"flag"
+	log "github.com/Sirupsen/logrus"
 	"github.com/google/gousb"
-	"log"
 )
 
-
-
 func main() {
+	log.SetLevel(log.DebugLevel)
+	filePath := flag.String("path", "", "Path for the .cyacd file")
+
+	flag.Parse()
+
+	if *filePath == "" {
+		log.Fatal("File for .cyacd is required.")
+	}
+
+	f := cyacdParse.NewCyacd(*filePath)
+
 	// Initialize a new Context.
 	ctx := gousb.NewContext()
 	defer ctx.Close()
@@ -37,7 +48,7 @@ func main() {
 	devUSB.Init(devs[0])
 	frame, err := cybootloader_protocol.CreateEnterBootloaderCmd([]byte{0xca,0xfe,0x00,0x00,0xca,0xfe})
 	if err != nil{
-		log.Println(err)
+		log.Fatalln(err)
 	}
 
 	log.Println("Enter bootloader.")
@@ -45,9 +56,54 @@ func main() {
 
 	val, e := cybootloader_protocol.ParseEnterBootloaderCmdResult(devUSB.Read())
 	if e != nil {
-		log.Println(e)
+		log.Debug(e)
 	}
-	log.Printf("Parse enter bootloader result: %#v", val)
+	log.Printf("Enter bootloader result: %#v", val)
+	if f.SiliconID() != val["siliconID"] || f.SiliconRev() != val["siliconRev"]  {
+		log.Debug("[ERROR] The expected device does not match the detected device")
+	}
+
+
+	for _,r := range f.ParseRowData(){
+		if cybootloader_protocol.ValidateRow(devUSB, r){
+			result := true
+			offset := uint16(0)
+			for result && (r.Size() - offset + 11) > 64 {
+				subBufSize := uint16(64 - 11)
+				frame := cybootloader_protocol.CreateSendDataCmd(r.Data()[offset:offset + subBufSize])
+				devUSB.Write(frame)
+				result = cybootloader_protocol.ParseSendDataCmdResult(devUSB.Read())
+				offset += subBufSize
+			}
+
+			if result {
+				subBufSize := r.Size() - offset
+				frame := cybootloader_protocol.CreateProgramRowCmd(r.Data()[offset:offset + subBufSize], r.ArrayID(), r.RowNum())
+				devUSB.Write(frame)
+				if cybootloader_protocol.ParseProgramRowCmdResult(devUSB.Read()){
+					checksum := r.Checksum() + r.ArrayID() + byte(r.RowNum() >> 8) + byte(r.RowNum()) + byte(r.Size()) + byte(r.Size() >> 8)
+					frame = cybootloader_protocol.CreateGetRowChecksumCmd(r.ArrayID(), r.RowNum())
+					devUSB.Write(frame)
+					checksumUSB, err := cybootloader_protocol.ParseGetRowChecksumCmdResult(devUSB.Read())
+					if err != nil {
+						log.Debug(e)
+						break
+					}
+
+					if checksum != checksumUSB {
+						log.Debug("[ERROR] The checksum does not match the expected value")
+						break
+					}
+				}
+			}else {
+				break
+			}
+
+		}else{
+			log.Println("[ERROR] The flash row is not valid")
+			break
+		}
+	}
 
 	log.Println("Exit bootloader. Auto reset")
 	devUSB.Write(cybootloader_protocol.CreateExitBootloaderCmd())

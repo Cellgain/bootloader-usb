@@ -1,8 +1,8 @@
 package usb
 
 import (
+	log "github.com/Sirupsen/logrus"
 	"github.com/google/gousb"
-	"log"
 )
 
 type USBDevice struct{
