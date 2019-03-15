@@ -16,7 +16,7 @@ const (
 	BaseCmdSize = 0x07
 
 	/* Command identifier for verifying the checksum value of the bootloadable project. */
-	CMD_VERIFY_CHECKSUM		= 0x31
+	CmdVerifyChecksum = 0x31
 	/* Command identifier for getting the number of flash rows in the target device. */
 	CmdGetFlashSize = 0x32
 	/* Command identifier for getting info about the app status. This is only supported on multi app bootloader. */
@@ -255,7 +255,7 @@ func ParseEraseRowCmdResult(r []byte) bool{
 	return ParseDefaultCmdResult(r)
 }
 
-func CreateEraseRowChecksumCmd(arrayID byte, row uint16 ) []byte{
+func CreateEraseRowCmd(arrayID byte, row uint16 ) []byte{
 	const CommandDataSize = 3
 	const CommandSize = BaseCmdSize + CommandDataSize
 
@@ -271,6 +271,38 @@ func CreateEraseRowChecksumCmd(arrayID byte, row uint16 ) []byte{
 	frame[9] = CmdStop
 
 	return frame
+}
+
+
+func CreateVerifyAppChecksumCmd() []byte{
+	const CommandDataSize = 0
+	const CommandSize = BaseCmdSize + CommandDataSize
+
+	frame := make([]byte, CommandSize)
+	frame[0] = CmdStart
+	frame[1] = CmdVerifyChecksum
+	frame[2] = byte(CommandDataSize)
+	frame[3] = byte(CommandDataSize) >> 8
+	frame[4],frame[5] = calcChecksum(frame)
+	frame[6] = CmdStop
+
+	return frame
+}
+
+func ParseVerifyAppChecksumCmdResult(r []byte) (byte, error){
+	const ResultDataSize = 1
+	const sizeResult = BaseCmdSize + ResultDataSize
+
+	frame := r[:sizeResult]
+
+	if frame[1] != CyretSuccess {
+		return 0xff, errors.New("[ERROR] The bootloader reported an error")
+	}else if frame[0] != CmdStart || frame[2] != ResultDataSize || frame[3] != (ResultDataSize >> 8) || frame[sizeResult - 1] != CmdStop {
+		return 0xff, errors.New("[ERROR] The data is not of the proper form")
+	}else{
+
+		return frame[4], nil
+	}
 }
 
 func ValidateRow(dev *usb.USBDevice, r *cyacdParse.Row) bool{
@@ -297,7 +329,7 @@ func CleanFlash(dev *usb.USBDevice, arrayID byte) bool{
 	}
 
 	for i:= val["startRow"]; i <= val["endRow"] ; i++ {
-		frame := CreateEraseRowChecksumCmd(arrayID, i)
+		frame := CreateEraseRowCmd(arrayID, i)
 		dev.Write(frame)
 		if !ParseEraseRowCmdResult(dev.Read()) {
 			log.Printf("Error erasing row number: %d ", i)
