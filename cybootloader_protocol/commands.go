@@ -317,6 +317,7 @@ func ValidateRow(dev *usb.USBDevice, r *cyacdParse.Row) bool{
 		return false
 	}
 
+	log.Info("Row is valid.")
 	return true
 }
 

@@ -63,12 +63,13 @@ func main() {
 		log.Debug("[ERROR] The expected device does not match the detected device")
 	}
 
-	log.Info("Start cleaning flash")
+	//log.Info("Start cleaning flash")
 	//cybootloader_protocol.CleanFlash(devUSB, 0x00)
-	log.Info("Finish cleaning flash")
+	//log.Info("Finish cleaning flash")
 
 	for i,r := range f.ParseRowData(){
-		log.Printf("Flashing Row %d",i)
+		log.Info("-------------------------------------------")
+		log.Printf("Row %d",i)
 		if cybootloader_protocol.ValidateRow(devUSB, r){
 			result := true
 			offset := uint16(0)
@@ -85,6 +86,7 @@ func main() {
 				frame := cybootloader_protocol.CreateProgramRowCmd(r.Data()[offset:offset + subBufSize], r.ArrayID(), r.RowNum())
 				devUSB.Write(frame)
 				if cybootloader_protocol.ParseProgramRowCmdResult(devUSB.Read()){
+					log.Info("Row flashed")
 					checksum := r.Checksum() + r.ArrayID() + byte(r.RowNum() >> 8) + byte(r.RowNum()) + byte(r.Size()) + byte(r.Size() >> 8)
 					frame = cybootloader_protocol.CreateGetRowChecksumCmd(r.ArrayID(), r.RowNum())
 					devUSB.Write(frame)
@@ -98,6 +100,8 @@ func main() {
 						log.Debug("[ERROR] The checksum does not match the expected value")
 						break
 					}
+
+					log.Info("Row Checksum passed")
 				}
 			}else {
 				break
