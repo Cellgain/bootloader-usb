@@ -63,14 +63,19 @@ func main() {
 		log.Debug("[ERROR] The expected device does not match the detected device")
 	}
 
+	log.Info("Start cleaning flash")
+	cybootloader_protocol.CleanFlash(devUSB, 0x00)
+	log.Info("Finish cleaning flash")
 
 	for _,r := range f.ParseRowData(){
+		log.Println("ROW")
 		if cybootloader_protocol.ValidateRow(devUSB, r){
 			result := true
 			offset := uint16(0)
 			for result && (r.Size() - offset + 11) > 64 {
 				subBufSize := uint16(64 - 11)
 				frame := cybootloader_protocol.CreateSendDataCmd(r.Data()[offset:offset + subBufSize])
+				log.Printf("%x",frame)
 				devUSB.Write(frame)
 				result = cybootloader_protocol.ParseSendDataCmdResult(devUSB.Read())
 				offset += subBufSize
@@ -79,6 +84,7 @@ func main() {
 			if result {
 				subBufSize := r.Size() - offset
 				frame := cybootloader_protocol.CreateProgramRowCmd(r.Data()[offset:offset + subBufSize], r.ArrayID(), r.RowNum())
+				log.Printf("%x",frame)
 				devUSB.Write(frame)
 				if cybootloader_protocol.ParseProgramRowCmdResult(devUSB.Read()){
 					checksum := r.Checksum() + r.ArrayID() + byte(r.RowNum() >> 8) + byte(r.RowNum()) + byte(r.Size()) + byte(r.Size() >> 8)

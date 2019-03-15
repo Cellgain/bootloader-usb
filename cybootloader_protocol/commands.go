@@ -22,7 +22,7 @@ const (
 	/* Command identifier for getting info about the app status. This is only supported on multi app bootloader. */
 	CMD_GET_APP_STATUS		= 0x33
 	/* Command identifier for reasing a row of flash data from the target device. */
-	CMD_ERASE_ROW			= 0x34
+	CmdEraseRow = 0x34
 	/* Command identifier for making sure the bootloader host and bootloader are in sync. */
 	CMD_SYNC 				= 0x35
 	/* Command identifier for setting the active application. This is only supported on multi app bootloader. */
@@ -40,34 +40,6 @@ const (
 
 
 	CyretSuccess = 0x00
-	/* File is not accessable */
-	CYRET_ERR_FILE 			= 0x01
-	/* Reached the end of the file */
-	CYRET_ERR_EOF 			= 0x02
-	/* The amount of data available is outside the expected range */
-	CYRET_ERR_LENGTH 		= 0x03
-	/* The data is not of the proper form */
-	CYRET_ERR_DATA 			= 0x04
-	/* The command is not recognized */
-	CYRET_ERR_CMD 			= 0x05
-	/* The expected device does not match the detected device */
-	CYRET_ERR_DEVICE 		= 0x06
-	/* The bootloader version detected is not supported */
-	CYRET_ERR_VERSION 		= 0x07
-	/* The checksum does not match the expected value */
-	CYRET_ERR_CHECKSUM 		= 0x08
-	/* The flash array is not valid */
-	CYRET_ERR_ARRAY 		= 0x09
-	/* The flash row is not valid */
-	CYRET_ERR_ROW 			= 0x0A
-	/* The bootloader is not ready to process data */
-	CYRET_ERR_BTLDR 		= 0x0B
-	/* The application is currently marked as active */
-	CYRET_ERR_ACTIVE 		= 0x0C
-	/* An unknown error occured */
-	CYRET_ERR_UNK 			= 0x0F
-		/* The operation was aborted */
-	CYRET_ABORT 			= 0xFF
 )
 
 func calcChecksum(frame []byte) (uint8, uint8) {
@@ -279,6 +251,28 @@ func ParseGetRowChecksumCmdResult(r []byte) (byte, error){
 	}
 }
 
+func ParseEraseRowCmdResult(r []byte) bool{
+	return ParseDefaultCmdResult(r)
+}
+
+func CreateEraseRowChecksumCmd(arrayID byte, row uint16 ) []byte{
+	const CommandDataSize = 3
+	const CommandSize = BaseCmdSize + CommandDataSize
+
+	frame := make([]byte, CommandSize)
+	frame[0] = CmdStart
+	frame[1] = CmdEraseRow
+	frame[2] = byte(CommandDataSize)
+	frame[3] = byte(CommandDataSize) >> 8
+	frame[4] = arrayID
+	frame[5] = byte(row)
+	frame[6] = byte(row) >> 8
+	frame[7],frame[8] = calcChecksum(frame)
+	frame[9] = CmdStop
+
+	return frame
+}
+
 func ValidateRow(dev *usb.USBDevice, r *cyacdParse.Row) bool{
 	frame := CreateGetFlashSizeCmd(r.ArrayID())
 	dev.Write(frame)
@@ -291,5 +285,23 @@ func ValidateRow(dev *usb.USBDevice, r *cyacdParse.Row) bool{
 		return false
 	}
 
+	return true
+}
+
+func CleanFlash(dev *usb.USBDevice, arrayID byte) bool{
+	frame := CreateGetFlashSizeCmd(arrayID)
+	dev.Write(frame)
+	val, e := ParseCreateGetFlashSizeCmdResult(dev.Read())
+	if e != nil {
+		log.Debug(e)
+	}
+
+	for i:= val["startRow"]; i <= val["endRow"] ; i++ {
+		frame := CreateEraseRowChecksumCmd(arrayID, i)
+		dev.Write(frame)
+		if !ParseEraseRowCmdResult(dev.Read()) {
+			log.Printf("Error erasing row number: %d ", i)
+		}
+	}
 	return true
 }
