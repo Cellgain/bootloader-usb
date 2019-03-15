@@ -204,7 +204,7 @@ func CreateProgramRowCmd(b []byte, arrayID byte, row uint16 ) []byte{
 	frame[3] = byte(CommandDataSize + len(b)) >> 8
 	frame[4] = arrayID
 	frame[5] = byte(row)
-	frame[6] = byte(row) >> 8
+	frame[6] = byte(row >> 8)
 	frame = append(frame[0:7],b...)
 	frame = append(frame, 0,0,0)
 	frame[len(frame) - 3],frame[len(frame) - 2] = calcChecksum(frame)

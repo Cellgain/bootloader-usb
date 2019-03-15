@@ -73,9 +73,10 @@ func main() {
 		if cybootloader_protocol.ValidateRow(devUSB, r){
 			result := true
 			offset := uint16(0)
-			for result && (r.Size() - offset + 11) > 64 {
-				subBufSize := uint16(64 - 11)
+			for result && (r.Size() - offset + 7) > 64 {
+				subBufSize := uint16(64 - 7)
 				frame := cybootloader_protocol.CreateSendDataCmd(r.Data()[offset:offset + subBufSize])
+				log.Printf("%x", frame)
 				devUSB.Write(frame)
 				result = cybootloader_protocol.ParseSendDataCmdResult(devUSB.Read())
 				offset += subBufSize
@@ -84,6 +85,7 @@ func main() {
 			if result {
 				subBufSize := r.Size() - offset
 				frame := cybootloader_protocol.CreateProgramRowCmd(r.Data()[offset:offset + subBufSize], r.ArrayID(), r.RowNum())
+				log.Printf("%x", frame)
 				devUSB.Write(frame)
 				if cybootloader_protocol.ParseProgramRowCmdResult(devUSB.Read()){
 					log.Info("Row flashed")
