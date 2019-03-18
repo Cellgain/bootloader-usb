@@ -41,11 +41,22 @@ func main() {
 	defer ctx.Close()
 	// Iterate through available Devices, finding all that match a known VID/PID.
 	vid, pid := gousb.ID(0x04b4), gousb.ID(0xb71d)
-	devs, err := ctx.OpenDevices(func(desc *gousb.DeviceDesc) bool {
-		// this function is called for every device present.
-		// Returning true means the device should be opened.
-		return desc.Vendor == vid && desc.Product == pid
-	})
+	i:= 0
+	devs := make([]*gousb.Device,0)
+	var err error
+	for{
+		devs, err = ctx.OpenDevices(func(desc *gousb.DeviceDesc) bool {
+			// this function is called for every device present.
+			// Returning true means the device should be opened.
+			return desc.Vendor == vid && desc.Product == pid
+		})
+
+		if len(devs) > 0 || i > 10 {
+			break
+		}
+		i++
+	}
+
 	// All returned devices are now open and will need to be closed.
 	if err != nil {
 		log.Fatalf("OpenDevices(): %v", err)
@@ -56,7 +67,7 @@ func main() {
 	}
 
 	if len(devs) == 0 {
-		log.Fatalf("no devices found matching")
+		log.Fatalf("no devices found matching VID %s and PID %s", vid, pid)
 	}
 
 
