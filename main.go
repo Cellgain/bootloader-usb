@@ -5,18 +5,33 @@ import (
 	"cellgain.ddns.net/cellgain-public/bootloader-usb/cybootloader_protocol"
 	"cellgain.ddns.net/cellgain-public/bootloader-usb/usb"
 	"flag"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/google/gousb"
+	"os"
 )
 
 func main() {
+	errorGlobal := false
+
 	log.SetLevel(log.DebugLevel)
 	filePath := flag.String("path", "", "Path for the .cyacd file")
+	serial := flag.String("serial", "", "Serial of the device")
 
 	flag.Parse()
 
 	if *filePath == "" {
-		log.Fatal("File for .cyacd is required.")
+		log.Error("Path for .cyacd is required.")
+		_, _ = fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
+		flag.PrintDefaults()
+		return
+	}
+
+	if *serial == "" {
+		log.Error("Device serial is required.")
+		_, _ = fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
+		flag.PrintDefaults()
+		return
 	}
 
 	f := cyacdParse.NewCyacd(*filePath)
@@ -33,6 +48,7 @@ func main() {
 		return desc.Vendor == vid && desc.Product == pid
 	})
 	// All returned devices are now open and will need to be closed.
+
 	for _, d := range devs {
 		defer d.Close()
 	}
@@ -43,9 +59,21 @@ func main() {
 		log.Fatalf("no devices found matching VID %s and PID %s", vid, pid)
 	}
 
-	// Pick the first device found.
 	devUSB := new(usb.USBDevice)
-	devUSB.Init(devs[0])
+	for _, d := range devs {
+		if s, err := d.SerialNumber(); err == nil{
+			if s == *serial {
+				devUSB.Init(d)
+			}
+		}else{
+			log.Fatalln(err)
+		}
+	}
+
+	if !devUSB.CheckDev(){
+		log.Fatalf("no devices found matching Serial %s", *serial)
+	}
+
 	frame, err := cybootloader_protocol.CreateEnterBootloaderCmd([]byte{0xca,0xfe,0x00,0x00,0xca,0xfe})
 	if err != nil{
 		log.Fatalln(err)
@@ -56,72 +84,80 @@ func main() {
 
 	val, e := cybootloader_protocol.ParseEnterBootloaderCmdResult(devUSB.Read())
 	if e != nil {
-		log.Debug(e)
+		log.Error(e)
 	}
-	log.Printf("Enter bootloader result: %#v", val)
+
 	if f.SiliconID() != val["siliconID"] || f.SiliconRev() != val["siliconRev"]  {
-		log.Debug("[ERROR] The expected device does not match the detected device")
-	}
-
-	//log.Info("Start cleaning flash")
-	//cybootloader_protocol.CleanFlash(devUSB, 0x00)
-	//log.Info("Finish cleaning flash")
-
-	for i,r := range f.ParseRowData(){
-		log.Info("-------------------------------------------")
-		log.Printf("Row %d",i)
-		if cybootloader_protocol.ValidateRow(devUSB, r){
-			result := true
-			offset := uint16(0)
-			for result && (r.Size() - offset + 7) > 64 {
-				subBufSize := uint16(64 - 7)
-				frame := cybootloader_protocol.CreateSendDataCmd(r.Data()[offset:offset + subBufSize])
-				log.Printf("%x", frame)
-				devUSB.Write(frame)
-				result = cybootloader_protocol.ParseSendDataCmdResult(devUSB.Read())
-				offset += subBufSize
-			}
-
-			if result {
-				subBufSize := r.Size() - offset
-				frame := cybootloader_protocol.CreateProgramRowCmd(r.Data()[offset:offset + subBufSize], r.ArrayID(), r.RowNum())
-				log.Printf("%x", frame)
-				devUSB.Write(frame)
-				if cybootloader_protocol.ParseProgramRowCmdResult(devUSB.Read()){
-					log.Info("Row flashed")
-					checksum := r.Checksum() + r.ArrayID() + byte(r.RowNum() >> 8) + byte(r.RowNum()) + byte(r.Size()) + byte(r.Size() >> 8)
-					frame = cybootloader_protocol.CreateGetRowChecksumCmd(r.ArrayID(), r.RowNum())
+		log.Error("[ERROR] The expected device does not match the detected device")
+		errorGlobal = true
+	}else{
+		for i,r := range f.ParseRowData(){
+			log.Info("-------------------------------------------")
+			log.Printf("Row %d",i)
+			if cybootloader_protocol.ValidateRow(devUSB, r){
+				result := true
+				offset := uint16(0)
+				for result && (r.Size() - offset + 7) > 64 {
+					subBufSize := uint16(64 - 7)
+					frame := cybootloader_protocol.CreateSendDataCmd(r.Data()[offset:offset + subBufSize])
 					devUSB.Write(frame)
-					checksumUSB, err := cybootloader_protocol.ParseGetRowChecksumCmdResult(devUSB.Read())
-					if err != nil {
-						log.Debug(e)
-						break
-					}
-
-					if checksum != checksumUSB {
-						log.Debug("[ERROR] The checksum does not match the expected value")
-						break
-					}
-
-					log.Info("Row Checksum passed")
+					result = cybootloader_protocol.ParseSendDataCmdResult(devUSB.Read())
+					offset += subBufSize
 				}
-			}else {
+
+				if result {
+					subBufSize := r.Size() - offset
+					frame := cybootloader_protocol.CreateProgramRowCmd(r.Data()[offset:offset + subBufSize], r.ArrayID(), r.RowNum())
+
+					devUSB.Write(frame)
+					if cybootloader_protocol.ParseProgramRowCmdResult(devUSB.Read()){
+						log.Info("Row flashed")
+						checksum := r.Checksum() + r.ArrayID() + byte(r.RowNum() >> 8) + byte(r.RowNum()) + byte(r.Size()) + byte(r.Size() >> 8)
+						frame = cybootloader_protocol.CreateGetRowChecksumCmd(r.ArrayID(), r.RowNum())
+						devUSB.Write(frame)
+						checksumUSB, err := cybootloader_protocol.ParseGetRowChecksumCmdResult(devUSB.Read())
+						if err != nil {
+							log.Error(e)
+							errorGlobal = true
+							break
+						}
+
+						if checksum != checksumUSB {
+							log.Error("[ERROR] The checksum does not match the expected value")
+							errorGlobal = true
+							break
+						}
+
+						log.Info("Row Checksum passed")
+					}
+				}else {
+					break
+				}
+
+			}else{
+				log.Error("[ERROR] The flash row is not valid")
+				errorGlobal = true
 				break
 			}
-
-		}else{
-			log.Println("[ERROR] The flash row is not valid")
-			break
 		}
+
+		devUSB.Write(cybootloader_protocol.CreateVerifyAppChecksumCmd())
+		checksumApp, _ := cybootloader_protocol.ParseVerifyAppChecksumCmdResult(devUSB.Read())
+
+		log.Printf("Checksum app: %x",checksumApp)
+
+		if checksumApp != 0 && errorGlobal == false {
+			log.Info("[SUCCESS] Device was successfully programmed")
+		}
+
 	}
 
-	devUSB.Write(cybootloader_protocol.CreateVerifyAppChecksumCmd())
-	checksumApp, err := cybootloader_protocol.ParseVerifyAppChecksumCmdResult(devUSB.Read())
-
-	log.Printf("Checksum app: %x",checksumApp)
-
-	log.Println("Exit bootloader. Auto reset")
+	log.Info("Exit bootloader. Auto reset")
 	devUSB.Write(cybootloader_protocol.CreateExitBootloaderCmd())
 
 	devUSB.DeferFunctions()
+
+	if errorGlobal {
+		log.Fatalln("[ERROR] There was an error during the programming of the device")
+	}
 }

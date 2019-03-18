@@ -12,8 +12,6 @@ type USBDevice struct{
 	done func()
 	epIn *gousb.InEndpoint
 	epOut *gousb.OutEndpoint
-
-
 }
 
 func (d *USBDevice)Init(dev *gousb.Device){
@@ -75,4 +73,12 @@ func (d *USBDevice)Read() []byte{
 	}
 
 	return buf
+}
+
+func (d *USBDevice)CheckDev() bool {
+	if d.dev == nil {
+		return false
+	}
+
+	return true
 }

@@ -228,7 +228,7 @@ func CreateGetRowChecksumCmd(arrayID byte, row uint16 ) []byte{
 	frame[3] = byte(CommandDataSize) >> 8
 	frame[4] = arrayID
 	frame[5] = byte(row)
-	frame[6] = byte(row) >> 8
+	frame[6] = byte(row >> 8)
 	frame[7],frame[8] = calcChecksum(frame)
 	frame[9] = CmdStop
 
@@ -266,7 +266,7 @@ func CreateEraseRowCmd(arrayID byte, row uint16 ) []byte{
 	frame[3] = byte(CommandDataSize) >> 8
 	frame[4] = arrayID
 	frame[5] = byte(row)
-	frame[6] = byte(row) >> 8
+	frame[6] = byte(row >> 8)
 	frame[7],frame[8] = calcChecksum(frame)
 	frame[9] = CmdStop
 

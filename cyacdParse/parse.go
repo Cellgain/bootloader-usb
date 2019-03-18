@@ -51,8 +51,6 @@ func (c *Cyacd)parseHeader(){
 
 	c.siliconID = uint32(decoded[0]) << 24 | uint32(decoded[1]) << 16 | uint32(decoded[2]) << 8 | uint32(decoded[3])
 	c.siliconRev = uint32(decoded[4])
-
-	c.close()
 }
 
 func (c *Cyacd)close(){
