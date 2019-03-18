@@ -11,12 +11,6 @@ import (
 	"os"
 )
 
-func getDevices() []*gousb.Device{
-
-
-	return devs
-}
-
 func main() {
 	errorGlobal := false
 
