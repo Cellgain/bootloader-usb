@@ -12,20 +12,7 @@ import (
 )
 
 func getDevices() []*gousb.Device{
-	// Initialize a new Context.
-	ctx := gousb.NewContext()
-	defer ctx.Close()
-	// Iterate through available Devices, finding all that match a known VID/PID.
-	vid, pid := gousb.ID(0x04b4), gousb.ID(0xb71d)
-	devs, err := ctx.OpenDevices(func(desc *gousb.DeviceDesc) bool {
-		// this function is called for every device present.
-		// Returning true means the device should be opened.
-		return desc.Vendor == vid && desc.Product == pid
-	})
-	// All returned devices are now open and will need to be closed.
-	if err != nil {
-		log.Fatalf("OpenDevices(): %v", err)
-	}
+
 
 	return devs
 }
@@ -55,14 +42,19 @@ func main() {
 
 	f := cyacdParse.NewCyacd(*filePath)
 
-	devs := make([]*gousb.Device,0)
-	i := 0
-	for{
-		devs = getDevices()
-		if len(devs) > 0 || i > 3 {
-			break
-		}
-		i++
+	// Initialize a new Context.
+	ctx := gousb.NewContext()
+	defer ctx.Close()
+	// Iterate through available Devices, finding all that match a known VID/PID.
+	vid, pid := gousb.ID(0x04b4), gousb.ID(0xb71d)
+	devs, err := ctx.OpenDevices(func(desc *gousb.DeviceDesc) bool {
+		// this function is called for every device present.
+		// Returning true means the device should be opened.
+		return desc.Vendor == vid && desc.Product == pid
+	})
+	// All returned devices are now open and will need to be closed.
+	if err != nil {
+		log.Fatalf("OpenDevices(): %v", err)
 	}
 
 	for _, d := range devs {
