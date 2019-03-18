@@ -46,6 +46,7 @@ func main() {
 	devs := make([]*gousb.Device,0)
 	var err error
 	for{
+		ctx = gousb.NewContext()
 		devs, err = ctx.OpenDevices(func(desc *gousb.DeviceDesc) bool {
 			// this function is called for every device present.
 			// Returning true means the device should be opened.
@@ -57,6 +58,7 @@ func main() {
 		}
 		i++
 		time.Sleep(time.Millisecond * 100)
+		ctx.Close()
 	}
 
 	// All returned devices are now open and will need to be closed.
