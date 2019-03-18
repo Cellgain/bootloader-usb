@@ -9,6 +9,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/google/gousb"
 	"os"
+	"time"
 )
 
 func main() {
@@ -55,6 +56,7 @@ func main() {
 			break
 		}
 		i++
+		time.Sleep(time.Millisecond * 100)
 	}
 
 	// All returned devices are now open and will need to be closed.
