@@ -1,0 +1,16 @@
+# github.com/google/gousb v0.0.0-20181005115310-15d2fa288b98
+## explicit
+github.com/google/gousb
+# github.com/konsorten/go-windows-terminal-sequences v1.0.2
+## explicit
+github.com/konsorten/go-windows-terminal-sequences
+# github.com/sirupsen/logrus v1.4.0
+## explicit
+github.com/sirupsen/logrus
+# golang.org/x/crypto v0.0.0-20180910181607-0e37d006457b
+## explicit
+golang.org/x/crypto/ssh/terminal
+# golang.org/x/sys v0.0.0-20180928133829-e4b3c5e90611
+## explicit
+golang.org/x/sys/unix
+golang.org/x/sys/windows
