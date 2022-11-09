@@ -4,7 +4,7 @@
 	"GodepVersion": "v80",
 	"Deps": [
 		{
-			"ImportPath": "github.com/Sirupsen/logrus",
+			"ImportPath": "github.com/sirupsen/logrus",
 			"Comment": "v1.4.0",
 			"Rev": "dae0fa8d5b0c810a8ab733fbd5510c7cae84eca4"
 		},

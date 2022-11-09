@@ -7,8 +7,8 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"github.com/google/gousb"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"time"
 )
@@ -45,11 +45,11 @@ func main() {
 	}
 
 	bytes, e := hex.DecodeString(*key)
-	if(e != nil){
+	if e != nil {
 		log.Fatalln(e)
 	}
 
-	log.Printf("%02x",bytes)
+	log.Printf("%02x", bytes)
 
 	f := cyacdParse.NewCyacd(*filePath)
 
@@ -58,10 +58,10 @@ func main() {
 	defer ctx.Close()
 	// Iterate through available Devices, finding all that match a known VID/PID.
 	vid, pid := gousb.ID(0x04b4), gousb.ID(0xb71d)
-	i:= 0
-	devs := make([]*gousb.Device,0)
+	i := 0
+	devs := make([]*gousb.Device, 0)
 	var err error
-	for{
+	for {
 		ctx = gousb.NewContext()
 		devs, err = ctx.OpenDevices(func(desc *gousb.DeviceDesc) bool {
 			// this function is called for every device present.
@@ -90,24 +90,23 @@ func main() {
 		log.Fatalf("no devices found matching VID %s and PID %s", vid, pid)
 	}
 
-
 	devUSB := new(usb.USBDevice)
 	for _, d := range devs {
-		if s, err := d.SerialNumber(); err == nil{
+		if s, err := d.SerialNumber(); err == nil {
 			if s == *serial {
 				devUSB.Init(d)
 			}
-		}else{
+		} else {
 			log.Fatalln(err)
 		}
 	}
 
-	if !devUSB.CheckDev(){
+	if !devUSB.CheckDev() {
 		log.Fatalf("no devices found matching Serial %s", *serial)
 	}
 
 	frame, err := cybootloader_protocol.CreateEnterBootloaderCmd(bytes)
-	if err != nil{
+	if err != nil {
 		log.Fatalln(err)
 	}
 

@@ -1,20 +1,20 @@
 package usb
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"github.com/google/gousb"
+	log "github.com/sirupsen/logrus"
 )
 
-type USBDevice struct{
-	dev *gousb.Device
-	cfg *gousb.Config
-	intf *gousb.Interface
-	done func()
-	epIn *gousb.InEndpoint
+type USBDevice struct {
+	dev   *gousb.Device
+	cfg   *gousb.Config
+	intf  *gousb.Interface
+	done  func()
+	epIn  *gousb.InEndpoint
 	epOut *gousb.OutEndpoint
 }
 
-func (d *USBDevice)Init(dev *gousb.Device){
+func (d *USBDevice) Init(dev *gousb.Device) {
 	var err error
 	d.dev = dev
 	if e := d.dev.SetAutoDetach(true); e != nil {
@@ -32,7 +32,6 @@ func (d *USBDevice)Init(dev *gousb.Device){
 		log.Fatalf("%s.Interface(0, 0): %v", d.cfg, err)
 	}
 
-
 	// In this interface open endpoint #2 for reading.
 	d.epIn, err = d.intf.InEndpoint(2)
 	if err != nil {
@@ -47,21 +46,21 @@ func (d *USBDevice)Init(dev *gousb.Device){
 
 }
 
-func (d *USBDevice)DeferFunctions(){
-	if e := d.cfg.Close(); e != nil{
+func (d *USBDevice) DeferFunctions() {
+	if e := d.cfg.Close(); e != nil {
 		log.Fatalln(e)
 	}
 	d.done()
 }
 
-func (d *USBDevice)Write(b []byte){
-	_ , err := d.epOut.Write(b)
+func (d *USBDevice) Write(b []byte) {
+	_, err := d.epOut.Write(b)
 	if err != nil {
 		log.Println("Write returned an error:", err)
 	}
 }
 
-func (d *USBDevice)Read() []byte{
+func (d *USBDevice) Read() []byte {
 	buf := make([]byte, 64)
 	readBytes, err := d.epIn.Read(buf)
 	if err != nil {
@@ -75,7 +74,7 @@ func (d *USBDevice)Read() []byte{
 	return buf
 }
 
-func (d *USBDevice)CheckDev() bool {
+func (d *USBDevice) CheckDev() bool {
 	if d.dev == nil {
 		return false
 	}

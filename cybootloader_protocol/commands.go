@@ -4,7 +4,7 @@ import (
 	"cellgain.ddns.net/cellgain-public/bootloader-usb/cyacdParse"
 	"cellgain.ddns.net/cellgain-public/bootloader-usb/usb"
 	"errors"
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -20,13 +20,13 @@ const (
 	/* Command identifier for getting the number of flash rows in the target device. */
 	CmdGetFlashSize = 0x32
 	/* Command identifier for getting info about the app status. This is only supported on multi app bootloader. */
-	CMD_GET_APP_STATUS		= 0x33
+	CMD_GET_APP_STATUS = 0x33
 	/* Command identifier for reasing a row of flash data from the target device. */
 	CmdEraseRow = 0x34
 	/* Command identifier for making sure the bootloader host and bootloader are in sync. */
-	CMD_SYNC 				= 0x35
+	CMD_SYNC = 0x35
 	/* Command identifier for setting the active application. This is only supported on multi app bootloader. */
-	CMD_SET_ACTIVE_APP 		= 0x36
+	CMD_SET_ACTIVE_APP = 0x36
 	/* Command identifier for sending a block of data to the bootloader without doing anything with it yet. */
 	CmdSendData = 0x37
 	/* Command identifier for starting the boot loader.  All other commands ignored until this is sent. */
@@ -37,7 +37,6 @@ const (
 	CmdGetRowChecksum = 0x3A
 	/* Command identifier for exiting the bootloader and restarting the target program. */
 	CmdExitBootloader = 0x3B
-
 
 	CyretSuccess = 0x00
 )
@@ -70,7 +69,7 @@ func CreateEnterBootloaderCmd(key []byte) ([]byte, error) {
 
 	if key != nil {
 		frame[2] = 0x06
-	}else{
+	} else {
 		frame[2] = 0x00
 	}
 
@@ -80,17 +79,17 @@ func CreateEnterBootloaderCmd(key []byte) ([]byte, error) {
 		if len(key) != 6 {
 			return nil, errors.New("invalid size of key. Must be 6 bytes")
 		}
-		frame = append(frame[0:4],key...)
+		frame = append(frame[0:4], key...)
 	}
 
-	frame = append(frame, 0,0,0)
-	frame[len(frame) - 3],frame[len(frame) - 2] = calcChecksum(frame)
-	frame[len(frame) - 1] = CmdStop
+	frame = append(frame, 0, 0, 0)
+	frame[len(frame)-3], frame[len(frame)-2] = calcChecksum(frame)
+	frame[len(frame)-1] = CmdStop
 
 	return frame, nil
 }
 
-func ParseEnterBootloaderCmdResult(r []byte) (map[string]uint32, error){
+func ParseEnterBootloaderCmdResult(r []byte) (map[string]uint32, error) {
 	const ResultDataSize = 8
 	const sizeResult = BaseCmdSize + ResultDataSize
 
@@ -98,13 +97,13 @@ func ParseEnterBootloaderCmdResult(r []byte) (map[string]uint32, error){
 
 	if frame[1] != CyretSuccess {
 		return nil, errors.New("[ERROR] The bootloader reported an error")
-	}else if frame[0] != CmdStart || frame[2] != ResultDataSize || frame[3] != (ResultDataSize >> 8) || frame[sizeResult - 1] != CmdStop {
+	} else if frame[0] != CmdStart || frame[2] != ResultDataSize || frame[3] != (ResultDataSize>>8) || frame[sizeResult-1] != CmdStop {
 		return nil, errors.New("[ERROR] The data is not of the proper form")
-	}else{
+	} else {
 		var r = make(map[string]uint32)
-		r["siliconID"] = uint32(frame[7]) << 24 | uint32(frame[6]) << 16 | uint32(frame[5]) << 8 | uint32(frame[4])
+		r["siliconID"] = uint32(frame[7])<<24 | uint32(frame[6])<<16 | uint32(frame[5])<<8 | uint32(frame[4])
 		r["siliconRev"] = uint32(frame[8])
-		r["bootloaderVersion"] = uint32(frame[11]) << 16 | uint32(frame[10]) << 8 | uint32(frame[9])
+		r["bootloaderVersion"] = uint32(frame[11])<<16 | uint32(frame[10])<<8 | uint32(frame[9])
 		return r, nil
 	}
 }
@@ -123,7 +122,7 @@ func CreateExitBootloaderCmd() []byte {
 	return frame
 }
 
-func CreateGetFlashSizeCmd(arrayID byte) []byte{
+func CreateGetFlashSizeCmd(arrayID byte) []byte {
 	const CommandDataSize = 1
 	const CommandSize = BaseCmdSize + CommandDataSize
 
@@ -139,7 +138,7 @@ func CreateGetFlashSizeCmd(arrayID byte) []byte{
 	return frame
 }
 
-func ParseCreateGetFlashSizeCmdResult(r []byte) (map[string]uint16, error){
+func ParseCreateGetFlashSizeCmdResult(r []byte) (map[string]uint16, error) {
 	const ResultDataSize = 4
 	const sizeResult = BaseCmdSize + ResultDataSize
 
@@ -147,18 +146,18 @@ func ParseCreateGetFlashSizeCmdResult(r []byte) (map[string]uint16, error){
 
 	if frame[1] != CyretSuccess {
 		return nil, errors.New("[ERROR] The bootloader reported an error")
-	}else if frame[0] != CmdStart || frame[2] != ResultDataSize || frame[3] != (ResultDataSize >> 8) || frame[sizeResult - 1] != CmdStop {
+	} else if frame[0] != CmdStart || frame[2] != ResultDataSize || frame[3] != (ResultDataSize>>8) || frame[sizeResult-1] != CmdStop {
 		return nil, errors.New("[ERROR] The data is not of the proper form")
-	}else{
+	} else {
 		var r = make(map[string]uint16)
-		r["startRow"] = uint16(frame[5]) << 8 | uint16(frame[4])
-		r["endRow"] = uint16(frame[7]) << 8 | uint16(frame[6])
+		r["startRow"] = uint16(frame[5])<<8 | uint16(frame[4])
+		r["endRow"] = uint16(frame[7])<<8 | uint16(frame[6])
 		return r, nil
 	}
 
 }
 
-func CreateSendDataCmd(b []byte) []byte{
+func CreateSendDataCmd(b []byte) []byte {
 
 	CommandSize := BaseCmdSize + len(b)
 
@@ -167,33 +166,33 @@ func CreateSendDataCmd(b []byte) []byte{
 	frame[1] = CmdSendData
 	frame[2] = byte(len(b))
 	frame[3] = byte(len(b)) >> 8
-	frame = append(frame[0:4],b...)
-	frame = append(frame, 0,0,0)
-	frame[len(frame) - 3],frame[len(frame) - 2] = calcChecksum(frame)
-	frame[len(frame) - 1] = CmdStop
+	frame = append(frame[0:4], b...)
+	frame = append(frame, 0, 0, 0)
+	frame[len(frame)-3], frame[len(frame)-2] = calcChecksum(frame)
+	frame[len(frame)-1] = CmdStop
 
 	return frame
 }
 
-func ParseDefaultCmdResult(r []byte) bool{
+func ParseDefaultCmdResult(r []byte) bool {
 	const sizeResult = BaseCmdSize
 
 	frame := r[:sizeResult]
 
 	if frame[1] != CyretSuccess {
 		return false
-	}else if frame[0] != CmdStart || frame[2] != 0 || frame[3] != 0 || frame[6] != CmdStop {
+	} else if frame[0] != CmdStart || frame[2] != 0 || frame[3] != 0 || frame[6] != CmdStop {
 		return false
 	}
 
 	return true
 }
 
-func ParseSendDataCmdResult(r []byte) bool{
+func ParseSendDataCmdResult(r []byte) bool {
 	return ParseDefaultCmdResult(r)
 }
 
-func CreateProgramRowCmd(b []byte, arrayID byte, row uint16 ) []byte{
+func CreateProgramRowCmd(b []byte, arrayID byte, row uint16) []byte {
 	const CommandDataSize = 3
 	CommandSize := BaseCmdSize + CommandDataSize + len(b)
 
@@ -201,23 +200,23 @@ func CreateProgramRowCmd(b []byte, arrayID byte, row uint16 ) []byte{
 	frame[0] = CmdStart
 	frame[1] = CmdProgramRow
 	frame[2] = byte(CommandDataSize + len(b))
-	frame[3] = byte(CommandDataSize + len(b)) >> 8
+	frame[3] = byte(CommandDataSize+len(b)) >> 8
 	frame[4] = arrayID
 	frame[5] = byte(row)
 	frame[6] = byte(row >> 8)
-	frame = append(frame[0:7],b...)
-	frame = append(frame, 0,0,0)
-	frame[len(frame) - 3],frame[len(frame) - 2] = calcChecksum(frame)
-	frame[len(frame) - 1] = CmdStop
+	frame = append(frame[0:7], b...)
+	frame = append(frame, 0, 0, 0)
+	frame[len(frame)-3], frame[len(frame)-2] = calcChecksum(frame)
+	frame[len(frame)-1] = CmdStop
 
 	return frame
 }
 
-func ParseProgramRowCmdResult(r []byte) bool{
+func ParseProgramRowCmdResult(r []byte) bool {
 	return ParseDefaultCmdResult(r)
 }
 
-func CreateGetRowChecksumCmd(arrayID byte, row uint16 ) []byte{
+func CreateGetRowChecksumCmd(arrayID byte, row uint16) []byte {
 	const CommandDataSize = 3
 	const CommandSize = BaseCmdSize + CommandDataSize
 
@@ -229,13 +228,13 @@ func CreateGetRowChecksumCmd(arrayID byte, row uint16 ) []byte{
 	frame[4] = arrayID
 	frame[5] = byte(row)
 	frame[6] = byte(row >> 8)
-	frame[7],frame[8] = calcChecksum(frame)
+	frame[7], frame[8] = calcChecksum(frame)
 	frame[9] = CmdStop
 
 	return frame
 }
 
-func ParseGetRowChecksumCmdResult(r []byte) (byte, error){
+func ParseGetRowChecksumCmdResult(r []byte) (byte, error) {
 	const ResultDataSize = 1
 	const sizeResult = BaseCmdSize + ResultDataSize
 
@@ -243,19 +242,19 @@ func ParseGetRowChecksumCmdResult(r []byte) (byte, error){
 
 	if frame[1] != CyretSuccess {
 		return 0xff, errors.New("[ERROR] The bootloader reported an error")
-	}else if frame[0] != CmdStart || frame[2] != ResultDataSize || frame[3] != (ResultDataSize >> 8) || frame[sizeResult - 1] != CmdStop {
+	} else if frame[0] != CmdStart || frame[2] != ResultDataSize || frame[3] != (ResultDataSize>>8) || frame[sizeResult-1] != CmdStop {
 		return 0xff, errors.New("[ERROR] The data is not of the proper form")
-	}else{
+	} else {
 
 		return frame[4], nil
 	}
 }
 
-func ParseEraseRowCmdResult(r []byte) bool{
+func ParseEraseRowCmdResult(r []byte) bool {
 	return ParseDefaultCmdResult(r)
 }
 
-func CreateEraseRowCmd(arrayID byte, row uint16 ) []byte{
+func CreateEraseRowCmd(arrayID byte, row uint16) []byte {
 	const CommandDataSize = 3
 	const CommandSize = BaseCmdSize + CommandDataSize
 
@@ -267,14 +266,13 @@ func CreateEraseRowCmd(arrayID byte, row uint16 ) []byte{
 	frame[4] = arrayID
 	frame[5] = byte(row)
 	frame[6] = byte(row >> 8)
-	frame[7],frame[8] = calcChecksum(frame)
+	frame[7], frame[8] = calcChecksum(frame)
 	frame[9] = CmdStop
 
 	return frame
 }
 
-
-func CreateVerifyAppChecksumCmd() []byte{
+func CreateVerifyAppChecksumCmd() []byte {
 	const CommandDataSize = 0
 	const CommandSize = BaseCmdSize + CommandDataSize
 
@@ -283,13 +281,13 @@ func CreateVerifyAppChecksumCmd() []byte{
 	frame[1] = CmdVerifyChecksum
 	frame[2] = byte(CommandDataSize)
 	frame[3] = byte(CommandDataSize) >> 8
-	frame[4],frame[5] = calcChecksum(frame)
+	frame[4], frame[5] = calcChecksum(frame)
 	frame[6] = CmdStop
 
 	return frame
 }
 
-func ParseVerifyAppChecksumCmdResult(r []byte) (byte, error){
+func ParseVerifyAppChecksumCmdResult(r []byte) (byte, error) {
 	const ResultDataSize = 1
 	const sizeResult = BaseCmdSize + ResultDataSize
 
@@ -297,15 +295,15 @@ func ParseVerifyAppChecksumCmdResult(r []byte) (byte, error){
 
 	if frame[1] != CyretSuccess {
 		return 0xff, errors.New("[ERROR] The bootloader reported an error")
-	}else if frame[0] != CmdStart || frame[2] != ResultDataSize || frame[3] != (ResultDataSize >> 8) || frame[sizeResult - 1] != CmdStop {
+	} else if frame[0] != CmdStart || frame[2] != ResultDataSize || frame[3] != (ResultDataSize>>8) || frame[sizeResult-1] != CmdStop {
 		return 0xff, errors.New("[ERROR] The data is not of the proper form")
-	}else{
+	} else {
 
 		return frame[4], nil
 	}
 }
 
-func ValidateRow(dev *usb.USBDevice, r *cyacdParse.Row) bool{
+func ValidateRow(dev *usb.USBDevice, r *cyacdParse.Row) bool {
 	frame := CreateGetFlashSizeCmd(r.ArrayID())
 	dev.Write(frame)
 	val, e := ParseCreateGetFlashSizeCmdResult(dev.Read())
@@ -313,7 +311,7 @@ func ValidateRow(dev *usb.USBDevice, r *cyacdParse.Row) bool{
 		log.Debug(e)
 	}
 
-	if r.RowNum() < val["startRow"] || r.RowNum() > val["endRow"]{
+	if r.RowNum() < val["startRow"] || r.RowNum() > val["endRow"] {
 		return false
 	}
 
@@ -321,7 +319,7 @@ func ValidateRow(dev *usb.USBDevice, r *cyacdParse.Row) bool{
 	return true
 }
 
-func CleanFlash(dev *usb.USBDevice, arrayID byte) bool{
+func CleanFlash(dev *usb.USBDevice, arrayID byte) bool {
 	frame := CreateGetFlashSizeCmd(arrayID)
 	dev.Write(frame)
 	val, e := ParseCreateGetFlashSizeCmdResult(dev.Read())
@@ -329,7 +327,7 @@ func CleanFlash(dev *usb.USBDevice, arrayID byte) bool{
 		log.Debug(e)
 	}
 
-	for i:= val["startRow"]; i <= val["endRow"] ; i++ {
+	for i := val["startRow"]; i <= val["endRow"]; i++ {
 		frame := CreateEraseRowCmd(arrayID, i)
 		dev.Write(frame)
 		if !ParseEraseRowCmdResult(dev.Read()) {
