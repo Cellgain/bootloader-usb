@@ -1,10 +1,11 @@
 package cybootloader_protocol
 
 import (
-	"cellgain.ddns.net/cellgain-public/bootloader-usb/cyacdParse"
-	"cellgain.ddns.net/cellgain-public/bootloader-usb/usb"
+	"bootloader-usb/cyacdParse"
 	"errors"
+	"fmt"
 	log "github.com/sirupsen/logrus"
+	"io"
 )
 
 const (
@@ -303,36 +304,59 @@ func ParseVerifyAppChecksumCmdResult(r []byte) (byte, error) {
 	}
 }
 
-func ValidateRow(dev *usb.USBDevice, r *cyacdParse.Row) bool {
+func ValidateRow(dev io.ReadWriter, r *cyacdParse.Row) error {
 	frame := CreateGetFlashSizeCmd(r.ArrayID())
-	dev.Write(frame)
-	val, e := ParseCreateGetFlashSizeCmdResult(dev.Read())
-	if e != nil {
-		log.Debug(e)
+
+	_, err := dev.Write(frame)
+	if err != nil {
+		return err
+	}
+
+	readBuf := make([]byte, 64)
+	_, err = dev.Read(readBuf)
+	if err != nil {
+		return err
+	}
+
+	val, err := ParseCreateGetFlashSizeCmdResult(readBuf)
+	if err != nil {
+		return err
 	}
 
 	if r.RowNum() < val["startRow"] || r.RowNum() > val["endRow"] {
-		return false
+		return errors.New("[ERROR] The row number is out of range")
 	}
 
 	log.Info("Row is valid.")
-	return true
+	return nil
 }
 
-func CleanFlash(dev *usb.USBDevice, arrayID byte) bool {
+func CleanFlash(dev io.ReadWriter, arrayID byte) error {
 	frame := CreateGetFlashSizeCmd(arrayID)
-	dev.Write(frame)
-	val, e := ParseCreateGetFlashSizeCmdResult(dev.Read())
-	if e != nil {
-		log.Debug(e)
+
+	_, err := dev.Write(frame)
+	if err != nil {
+		return err
+	}
+
+	readBuf := make([]byte, 0)
+	_, err = dev.Read(readBuf)
+	val, err := ParseCreateGetFlashSizeCmdResult(readBuf)
+	if err != nil {
+		return err
 	}
 
 	for i := val["startRow"]; i <= val["endRow"]; i++ {
-		frame := CreateEraseRowCmd(arrayID, i)
-		dev.Write(frame)
-		if !ParseEraseRowCmdResult(dev.Read()) {
-			log.Printf("Error erasing row number: %d ", i)
+		frame = CreateEraseRowCmd(arrayID, i)
+		_, err = dev.Write(frame)
+		if err != nil {
+			return err
+		}
+
+		_, err = dev.Read(readBuf)
+		if !ParseEraseRowCmdResult(readBuf) {
+			return errors.New(fmt.Sprintf("Error erasing row number: %d ", i))
 		}
 	}
-	return true
+	return nil
 }

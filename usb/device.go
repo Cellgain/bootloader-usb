@@ -3,9 +3,10 @@ package usb
 import (
 	"github.com/google/gousb"
 	log "github.com/sirupsen/logrus"
+	"io"
 )
 
-type USBDevice struct {
+type Device struct {
 	dev   *gousb.Device
 	cfg   *gousb.Config
 	intf  *gousb.Interface
@@ -14,9 +15,15 @@ type USBDevice struct {
 	epOut *gousb.OutEndpoint
 }
 
-func (d *USBDevice) Init(dev *gousb.Device) {
+func NewDevice(dev *gousb.Device) (*Device, error) {
+	return &Device{
+		dev: dev,
+	}, nil
+}
+
+func (d *Device) Init() {
 	var err error
-	d.dev = dev
+
 	if e := d.dev.SetAutoDetach(true); e != nil {
 		log.Fatalln(e)
 	}
@@ -24,10 +31,10 @@ func (d *USBDevice) Init(dev *gousb.Device) {
 	// Switch the configuration to #1.
 	d.cfg, err = d.dev.Config(1)
 	if err != nil {
-		log.Fatalf("%s.Config(1): %v", dev, err)
+		log.Fatalf("%s.Config(1): %v", d.dev, err)
 	}
 
-	d.intf, d.done, err = dev.DefaultInterface()
+	d.intf, d.done, err = d.dev.DefaultInterface()
 	if err != nil {
 		log.Fatalf("%s.Interface(0, 0): %v", d.cfg, err)
 	}
@@ -46,38 +53,45 @@ func (d *USBDevice) Init(dev *gousb.Device) {
 
 }
 
-func (d *USBDevice) DeferFunctions() {
+func (d *Device) Close() error {
 	if e := d.cfg.Close(); e != nil {
-		log.Fatalln(e)
+		return e
 	}
 	d.done()
+
+	return nil
 }
 
-func (d *USBDevice) Write(b []byte) {
-	_, err := d.epOut.Write(b)
+func (d *Device) Write(b []byte) (int, error) {
+	writeBytes, err := d.epOut.Write(b)
 	if err != nil {
-		log.Println("Write returned an error:", err)
+		return writeBytes, err
 	}
+
+	return writeBytes, nil
 }
 
-func (d *USBDevice) Read() []byte {
-	buf := make([]byte, 64)
+func (d *Device) Read(buf []byte) (int, error) {
 	readBytes, err := d.epIn.Read(buf)
 	if err != nil {
-		log.Println("Read returned an error:", err)
+		return readBytes, err
 	}
 
 	if readBytes == 0 {
-		log.Println("IN endpoint 2 returned 0 bytes of data.")
+		return readBytes, nil
 	}
 
-	return buf
+	return readBytes, nil
 }
 
-func (d *USBDevice) CheckDev() bool {
+func (d *Device) CheckDev() bool {
 	if d.dev == nil {
 		return false
 	}
 
 	return true
+}
+
+func (d *Device) GetReadWriteCloser() io.ReadWriteCloser {
+	return io.ReadWriteCloser(d)
 }

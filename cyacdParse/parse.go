@@ -22,34 +22,45 @@ func (c *Cyacd) SiliconID() uint32 {
 	return c.siliconID
 }
 
-func NewCyacd(path string) *Cyacd {
-	r := &Cyacd{path: path}
-	r.open()
-	r.parseHeader()
-	r.close()
-	return r
+func NewCyacd(path string) (*Cyacd, error) {
+	r := &Cyacd{
+		path: path,
+	}
+
+	if err := r.parseHeader(); err != nil {
+		return nil, err
+	}
+
+	return r, nil
 }
 
-func (c *Cyacd) open() {
+func (c *Cyacd) open() error {
 	var err error
 	c.file, err = os.Open(c.path) // For read access.
 	if err != nil {
-		log.Debug(err)
+		return err
 	}
+	return nil
 }
 
-func (c *Cyacd) parseHeader() {
-	c.open()
+func (c *Cyacd) parseHeader() error {
+	if err := c.open(); err != nil {
+		return err
+	}
+	defer c.close()
+
 	scanner := bufio.NewReader(c.file)
-	line, _, e := scanner.ReadLine()
-	if e != nil {
-		log.Println(e)
+	line, _, err := scanner.ReadLine()
+	if err != nil {
+		return err
 	}
 
 	decoded, _ := hex.DecodeString(string(line))
 
 	c.siliconID = uint32(decoded[0])<<24 | uint32(decoded[1])<<16 | uint32(decoded[2])<<8 | uint32(decoded[3])
 	c.siliconRev = uint32(decoded[4])
+
+	return nil
 }
 
 func (c *Cyacd) close() {
