@@ -8,9 +8,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"flag"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"strings"
+	"time"
 )
 
 const (
@@ -27,6 +29,13 @@ var (
 )
 
 func main() {
+	startTime := time.Now()
+
+	defer func(s time.Time) {
+		elapsedTime := time.Since(s)
+		log.Infof("Process time: %s", elapsedTime.String())
+	}(startTime)
+
 	log.SetLevel(log.DebugLevel)
 	log.SetFormatter(&log.JSONFormatter{
 		TimestampFormat: "2006-01-02 15:04:05",
@@ -96,51 +105,61 @@ func main() {
 		if f.SiliconID() != val["siliconID"] || f.SiliconRev() != val["siliconRev"] {
 			checkError(errors.New("[ERROR] The expected device does not match the detected device"), "Error")
 		} else {
-			for i, r := range f.ParseRowData() {
-				log.Printf("Row %d", i)
-				if err = cybootloader_protocol.ValidateRow(peripheral, r); err == nil {
-					result := true
-					offset := uint16(0)
-					for result && (r.Size()-offset+7) > PacketSize {
-						subBufSize := uint16(PacketSize - 7)
+			var start, end uint16
 
-						frame = cybootloader_protocol.CreateSendDataCmd(r.Data()[offset : offset+subBufSize])
+			err, start, end = cybootloader_protocol.GetFlashSize(peripheral)
+			if err != nil {
+				checkError(errors.New("[ERROR] Error reading Flash size"), "Error")
+			}
+			rows := f.ParseRowData()
+			totalRows := len(rows)
+			for i, r := range rows {
+				progress := float64(i+1) / float64(totalRows)
+				printProgressBar(progress)
+				//log.Printf("Row %d", i)
+				if r.RowNum() < start || r.RowNum() > end {
+					checkError(errors.New("[ERROR] The row number is out of range"), "Error")
+				}
+				result := true
+				offset := uint16(0)
+				for result && (r.Size()-offset+7) > PacketSize {
+					subBufSize := uint16(PacketSize - 7)
+
+					frame = cybootloader_protocol.CreateSendDataCmd(r.Data()[offset : offset+subBufSize])
+					transactionPeripheral(frame)
+
+					result = cybootloader_protocol.ParseSendDataCmdResult(readBuf)
+					offset += subBufSize
+				}
+
+				if result {
+					subBufSize := r.Size() - offset
+
+					frame = cybootloader_protocol.CreateProgramRowCmd(r.Data()[offset:offset+subBufSize], r.ArrayID(), r.RowNum())
+					transactionPeripheral(frame)
+
+					if cybootloader_protocol.ParseProgramRowCmdResult(readBuf) {
+						//log.Info("Row flashed")
+						checksum := r.Checksum() + r.ArrayID() + byte(r.RowNum()>>8) + byte(r.RowNum()) + byte(r.Size()) + byte(r.Size()>>8)
+
+						frame = cybootloader_protocol.CreateGetRowChecksumCmd(r.ArrayID(), r.RowNum())
 						transactionPeripheral(frame)
 
-						result = cybootloader_protocol.ParseSendDataCmdResult(readBuf)
-						offset += subBufSize
-					}
+						checksumUSB, err := cybootloader_protocol.ParseGetRowChecksumCmdResult(readBuf)
+						checkError(err, "Error parsing frame")
 
-					if result {
-						subBufSize := r.Size() - offset
-
-						frame = cybootloader_protocol.CreateProgramRowCmd(r.Data()[offset:offset+subBufSize], r.ArrayID(), r.RowNum())
-						transactionPeripheral(frame)
-
-						if cybootloader_protocol.ParseProgramRowCmdResult(readBuf) {
-							log.Info("Row flashed")
-							checksum := r.Checksum() + r.ArrayID() + byte(r.RowNum()>>8) + byte(r.RowNum()) + byte(r.Size()) + byte(r.Size()>>8)
-
-							frame = cybootloader_protocol.CreateGetRowChecksumCmd(r.ArrayID(), r.RowNum())
-							transactionPeripheral(frame)
-
-							checksumUSB, err := cybootloader_protocol.ParseGetRowChecksumCmdResult(readBuf)
-							checkError(err, "Error parsing frame")
-
-							if checksum != checksumUSB {
-								checkError(errors.New("[ERROR] The checksum does not match the expected value"), "Error")
-							}
-
-							log.Info("Row Checksum passed")
+						if checksum != checksumUSB {
+							checkError(errors.New("[ERROR] The checksum does not match the expected value"), "Error")
 						}
-					} else {
-						checkError(errors.New("[ERROR] There was an error during the programming of the device"), "Error")
-					}
 
+						//log.Info("Row Checksum passed")
+					}
 				} else {
-					checkError(err, "Error validating row")
+					checkError(errors.New("[ERROR] There was an error during the programming of the device"), "Error")
 				}
 			}
+
+			log.Println("")
 
 			frame = cybootloader_protocol.CreateVerifyAppChecksumCmd()
 			transactionPeripheral(frame)
@@ -160,7 +179,6 @@ func main() {
 
 	err = peripheral.Close()
 	checkError(err, "Error closing peripheral")
-
 }
 
 func validateParams(mode, filePath, port, key, serial string) {
@@ -207,14 +225,14 @@ func checkError(err error, message string) {
 
 func readPeripheral() {
 	readBuf = make([]byte, PacketSize)
-	n, err := peripheral.Read(readBuf)
-	log.Printf("Read %d bytes", n)
+	_, err := peripheral.Read(readBuf)
+	//log.Printf("Read %d bytes", n)
 	checkError(err, "Error reading frame")
 }
 
 func writePeripheral(frame []byte) {
-	n, err := peripheral.Write(frame)
-	log.Printf("Write %d bytes", n)
+	_, err := peripheral.Write(frame)
+	//log.Printf("Write %d bytes", n)
 	checkError(err, "Error writing frame")
 
 	return
@@ -223,7 +241,28 @@ func writePeripheral(frame []byte) {
 func transactionPeripheral(frame []byte) {
 	// send frame
 	writePeripheral(frame)
-
+	time.Sleep(time.Millisecond * 20)
 	// read response
 	readPeripheral()
+}
+
+const ProgressBarWidth = 50
+
+func printProgressBar(progress float64) {
+	// Calculate the position of the progress
+	pos := int(ProgressBarWidth * progress)
+
+	// Print the progress bar
+	fmt.Printf("\r[")
+	for i := 0; i < ProgressBarWidth; i++ {
+		if i < pos {
+			fmt.Print("=")
+		} else if i == pos {
+			fmt.Print(">")
+		} else {
+			fmt.Print(" ")
+		}
+	}
+	// Print percentage complete
+	fmt.Printf("] %3.0f%%", progress*100)
 }

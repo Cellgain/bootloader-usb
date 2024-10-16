@@ -5,18 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c23bb4e4-6603-4686-9fb8-fdd41af1df24" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/uart/device.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/usb/findDevice.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Godeps/Godeps.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Godeps/Readme" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cyacdParse/parse.go" beforeDir="false" afterPath="$PROJECT_DIR$/cyacdParse/parse.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cybootloader_protocol/commands.go" beforeDir="false" afterPath="$PROJECT_DIR$/cybootloader_protocol/commands.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/usb/comunication.go" beforeDir="false" afterPath="$PROJECT_DIR$/usb/device.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/uart/device.go" beforeDir="false" afterPath="$PROJECT_DIR$/uart/device.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -58,6 +50,10 @@
       </list>
     </option>
   </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -98,6 +94,8 @@
   <component name="PropertiesComponent">{
   &quot;keyToString&quot;: {
     &quot;DefaultGoTemplateProperty&quot;: &quot;Go File&quot;,
+    &quot;Go Build.bootloader-usb.executor&quot;: &quot;Run&quot;,
+    &quot;Go Build.go build main.go.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
@@ -123,7 +121,7 @@
     &quot;settings.editor.selected.configurable&quot;: &quot;go.vgo&quot;
   }
 }</component>
-  <component name="RunManager" selected="Shell Script.build arm7">
+  <component name="RunManager" selected="Shell Script.build arm64">
     <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="bootloader-usb" />
       <working_directory value="$PROJECT_DIR$/" />
@@ -154,22 +152,15 @@
     <configuration name="bootloader-usb" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="bootloader-usb" />
       <working_directory value="$PROJECT_DIR$/" />
-      <go_parameters value="-i" />
-      <parameters value="-path=$USER_HOME$/Descargas/CGW-FORX-200-REV1-empty.cyacd -serial=C7AF380C2E1D2B00 -key=CAFE0000CAFE" />
+      <parameters value="--path=&quot;C:\Users\Jose Moffa\Downloads\CGW-FTA-2-FW-01-01-00.cyacd&quot; --mode=serial --key=CAFE0000CAFE --port=COM3" />
+      <envs>
+        <env name="CGO_ENABLED" value="1" />
+      </envs>
       <kind value="PACKAGE" />
-      <package value="cellgain.ddns.net/cellgain-public/bootloader-usb" />
+      <package value="bootloader-usb" />
       <directory value="$PROJECT_DIR$/" />
       <filePath value="$PROJECT_DIR$/|$PROJECT_DIR$/main.go" />
       <output_directory value="$PROJECT_DIR$/bin" />
-      <method v="2" />
-    </configuration>
-    <configuration name="go build main.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
-      <module name="bootloader-usb" />
-      <working_directory value="$PROJECT_DIR$/" />
-      <kind value="FILE" />
-      <package value="cellgain.ddns.net/cellgain-public/bootloader-usb" />
-      <directory value="$PROJECT_DIR$/" />
-      <filePath value="$PROJECT_DIR$/main.go" />
       <method v="2" />
     </configuration>
     <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
@@ -182,7 +173,7 @@
       <method v="2" />
     </configuration>
     <configuration name="build arm64" type="ShConfigurationType">
-      <option name="SCRIPT_TEXT" value="docker run --rm -v ${PWD}:/usr/src/myapp -w /usr/src/myapp -e GOOS=linux -e CGO_ENABLED=1 -e CC=aarch64-linux-gnu-gcc -e GOARCH=arm64 arm64_image_compiler go build -v -o ./bin/bootloader-usb-arm64 bootloader-usb" />
+      <option name="SCRIPT_TEXT" value="docker run --rm -v ${PWD}:/usr/src/myapp -w /usr/src/myapp -e CGO_ENABLED=1 -e CC=aarch64-linux-gnu-gcc -e GOOS=linux -e GOARCH=arm64 -e PKG_CONFIG_PATH=/usr/local/aarch64-linux-gnu/lib/pkgconfig -e LD_LIBRARY_PATH=/usr/local/aarch64-linux-gnu/lib ghcr.io/cellgain/arm7_aarch64_image:latest go build -v -o ./bin/bootloader-usb-arm64 bootloader-usb" />
       <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
       <option name="SCRIPT_PATH" value="" />
       <option name="SCRIPT_OPTIONS" value="" />
@@ -197,7 +188,7 @@
       <method v="2" />
     </configuration>
     <configuration name="build arm7" type="ShConfigurationType">
-      <option name="SCRIPT_TEXT" value="docker run --rm -v ${PWD}:/usr/src/myapp -w /usr/src/myapp -e CGO_ENABLED=1 -e CC=arm-linux-gnueabihf-gcc -e GOOS=linux -e GOARM=7 -e GOARCH=arm arm_image_compiler:latest go build -v -o ./bin/bootloader-usb-arm7 bootloader-usb" />
+      <option name="SCRIPT_TEXT" value="docker run --rm -v ${PWD}:/usr/src/myapp -w /usr/src/myapp -e CGO_ENABLED=1 -e CC=arm-linux-gnueabihf-gcc -e GOOS=linux -e GOARM=7 -e GOARCH=arm -e PKG_CONFIG_PATH=/usr/local/arm-linux-gnueabihf/lib/pkgconfig ghcr.io/cellgain/arm7_aarch64_image:latest go build -v -o ./bin/bootloader-usb-arm7 bootloader-usb" />
       <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
       <option name="SCRIPT_PATH" value="" />
       <option name="SCRIPT_OPTIONS" value="" />
@@ -214,21 +205,15 @@
     <list>
       <item itemvalue="Go Build.bootloader-usb" />
       <item itemvalue="Go Build.beaglebone" />
-      <item itemvalue="Go Build.go build main.go" />
       <item itemvalue="Shell Script.build arm64" />
       <item itemvalue="Shell Script.build arm7" />
     </list>
-    <recent_temporary>
-      <list>
-        <item itemvalue="Go Build.go build main.go" />
-      </list>
-    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-gosdk-33c477a475b1-e0158606a674-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-241.18034.61" />
-        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-GO-241.18034.61" />
+        <option value="bundled-gosdk-5df93f7ad4aa-df9ad98b711f-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-242.23339.24" />
+        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-GO-242.23339.24" />
       </set>
     </attachedChunks>
   </component>
@@ -294,11 +279,16 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/cybootloader_protocol/commands.go</url>
-          <line>199</line>
+          <line>198</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
+    <watches-manager>
+      <configuration name="GoApplicationRunConfiguration">
+        <watch expression="readBuf" language="go" />
+      </configuration>
+    </watches-manager>
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/../../../github.com/howeyc/crc16/crc16.go">

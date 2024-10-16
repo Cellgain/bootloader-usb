@@ -11,9 +11,9 @@ type Device struct {
 func NewDevice(port string) (*Device, error) {
 	dev, err := serial.OpenPort(
 		&serial.Config{
-			Name:        port,
-			Baud:        115200,
-			ReadTimeout: 250,
+			Name: port,
+			Baud: 115200,
+			//ReadTimeout: time.Millisecond * 1000,
 		},
 	)
 	if err != nil {

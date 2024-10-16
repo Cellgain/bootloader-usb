@@ -1,11 +1,10 @@
 package cybootloader_protocol
 
 import (
-	"bootloader-usb/cyacdParse"
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io"
+	"time"
 )
 
 const (
@@ -123,7 +122,7 @@ func CreateExitBootloaderCmd() []byte {
 	return frame
 }
 
-func CreateGetFlashSizeCmd(arrayID byte) []byte {
+func CreateGetFlashSizeCmd() []byte {
 	const CommandDataSize = 1
 	const CommandSize = BaseCmdSize + CommandDataSize
 
@@ -132,7 +131,7 @@ func CreateGetFlashSizeCmd(arrayID byte) []byte {
 	frame[1] = CmdGetFlashSize
 	frame[2] = byte(CommandDataSize)
 	frame[3] = byte(CommandDataSize) >> 8
-	frame[4] = arrayID
+	frame[4] = 0x00
 	frame[5], frame[6] = calcChecksum(frame)
 	frame[7] = CmdStop
 
@@ -304,35 +303,32 @@ func ParseVerifyAppChecksumCmdResult(r []byte) (byte, error) {
 	}
 }
 
-func ValidateRow(dev io.ReadWriter, r *cyacdParse.Row) error {
-	frame := CreateGetFlashSizeCmd(r.ArrayID())
+func GetFlashSize(dev io.ReadWriter) (error, uint16, uint16) {
+	frame := CreateGetFlashSizeCmd()
 
 	_, err := dev.Write(frame)
 	if err != nil {
-		return err
+		return err, 0, 0
 	}
+
+	time.Sleep(time.Millisecond * 15)
 
 	readBuf := make([]byte, 64)
 	_, err = dev.Read(readBuf)
 	if err != nil {
-		return err
+		return err, 0, 0
 	}
 
 	val, err := ParseCreateGetFlashSizeCmdResult(readBuf)
 	if err != nil {
-		return err
+		return err, 0, 0
 	}
 
-	if r.RowNum() < val["startRow"] || r.RowNum() > val["endRow"] {
-		return errors.New("[ERROR] The row number is out of range")
-	}
-
-	log.Info("Row is valid.")
-	return nil
+	return nil, val["startRow"], val["endRow"]
 }
 
 func CleanFlash(dev io.ReadWriter, arrayID byte) error {
-	frame := CreateGetFlashSizeCmd(arrayID)
+	frame := CreateGetFlashSizeCmd()
 
 	_, err := dev.Write(frame)
 	if err != nil {
