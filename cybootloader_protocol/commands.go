@@ -311,7 +311,7 @@ func GetFlashSize(dev io.ReadWriter) (error, uint16, uint16) {
 		return err, 0, 0
 	}
 
-	time.Sleep(time.Millisecond * 15)
+	time.Sleep(time.Millisecond * 20)
 
 	readBuf := make([]byte, 64)
 	_, err = dev.Read(readBuf)

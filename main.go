@@ -241,7 +241,7 @@ func writePeripheral(frame []byte) {
 func transactionPeripheral(frame []byte) {
 	// send frame
 	writePeripheral(frame)
-	time.Sleep(time.Millisecond * 20)
+	time.Sleep(time.Millisecond * 25)
 	// read response
 	readPeripheral()
 }
