@@ -2,6 +2,7 @@ package uart
 
 import (
 	"github.com/tarm/serial"
+	"time"
 )
 
 type Device struct {
@@ -13,7 +14,7 @@ func NewDevice(port string) (*Device, error) {
 		&serial.Config{
 			Name: port,
 			Baud: 115200,
-			//ReadTimeout: time.Millisecond * 1000,
+			ReadTimeout: time.Millisecond * 1000,
 		},
 	)
 	if err != nil {

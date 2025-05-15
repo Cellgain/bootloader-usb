@@ -227,7 +227,13 @@ func readPeripheral() {
 	readBuf = make([]byte, PacketSize)
 	_, err := peripheral.Read(readBuf)
 	//log.Printf("Read %d bytes", n)
-	checkError(err, "Error reading frame")
+	if err != nil {
+		if err.Error() == "read operation timed out" || err.Error() == "timeout" {
+			checkError(err, "Communication timeout: device is unresponsive or not in bootloader mode")
+		} else {
+			checkError(err, "Error reading frame")
+		}
+	}
 }
 
 func writePeripheral(frame []byte) {
