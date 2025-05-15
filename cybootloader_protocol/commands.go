@@ -89,23 +89,66 @@ func CreateEnterBootloaderCmd(key []byte) ([]byte, error) {
 	return frame, nil
 }
 
+// ParseEnterBootloaderCmdResult parses the response from the bootloader after an
+// "Enter Bootloader" command and extracts the silicon ID, silicon revision, and
+// bootloader version information.
+//
+// Parameters:
+//   - r: Byte array containing the raw response from the bootloader
+//
+// Returns:
+//   - map[string]uint32: A map with keys "siliconID", "siliconRev", and "bootloaderVersion"
+//   - error: An error if the response has an invalid format or indicates a bootloader error
 func ParseEnterBootloaderCmdResult(r []byte) (map[string]uint32, error) {
 	const ResultDataSize = 8
-	const sizeResult = BaseCmdSize + ResultDataSize
+	const expectedFrameSize = BaseCmdSize + ResultDataSize
 
-	frame := r[:sizeResult]
-
-	if frame[1] != CyretSuccess {
-		return nil, errors.New("[ERROR] The bootloader reported an error")
-	} else if frame[0] != CmdStart || frame[2] != ResultDataSize || frame[3] != (ResultDataSize>>8) || frame[sizeResult-1] != CmdStop {
-		return nil, errors.New("[ERROR] The data is not of the proper form")
-	} else {
-		var r = make(map[string]uint32)
-		r["siliconID"] = uint32(frame[7])<<24 | uint32(frame[6])<<16 | uint32(frame[5])<<8 | uint32(frame[4])
-		r["siliconRev"] = uint32(frame[8])
-		r["bootloaderVersion"] = uint32(frame[11])<<16 | uint32(frame[10])<<8 | uint32(frame[9])
-		return r, nil
+	// Check if we have enough data to process
+	if len(r) < expectedFrameSize {
+		return nil, fmt.Errorf("invalid response: expected at least %d bytes, got %d", expectedFrameSize, len(r))
 	}
+
+	frame := r[:expectedFrameSize]
+
+	// Check if bootloader reported an error
+	if frame[1] != CyretSuccess {
+		return nil, fmt.Errorf("bootloader reported an error: status code 0x%02X", frame[1])
+	}
+
+	// Validate frame format
+	if frame[0] != CmdStart {
+		return nil, fmt.Errorf("invalid start byte: expected 0x%02X, got 0x%02X", CmdStart, frame[0])
+	}
+
+	// Validate data size (little-endian format)
+	dataSize := uint16(frame[2]) | (uint16(frame[3]) << 8)
+	if dataSize != ResultDataSize {
+		return nil, fmt.Errorf("invalid data size: expected %d, got %d", ResultDataSize, dataSize)
+	}
+
+	// Check the end marker
+	if frame[expectedFrameSize-1] != CmdStop {
+		return nil, fmt.Errorf("invalid end byte: expected 0x%02X, got 0x%02X", CmdStop, frame[expectedFrameSize-1])
+	}
+
+	// All validation passed, extract the data fields
+	result := make(map[string]uint32)
+
+	// Silicon ID (4 bytes, little-endian)
+	result["siliconID"] = uint32(frame[4]) |
+		(uint32(frame[5]) << 8) |
+		(uint32(frame[6]) << 16) |
+		(uint32(frame[7]) << 24)
+
+	// Silicon Revision (1 byte)
+	result["siliconRev"] = uint32(frame[8])
+
+	// Bootloader Version (3 bytes, little-endian)
+	result["bootloaderVersion"] = uint32(frame[9]) |
+		(uint32(frame[10]) << 8) |
+		(uint32(frame[11]) << 16)
+
+	return result, nil
 }
 
 func CreateExitBootloaderCmd() []byte {
@@ -316,6 +359,9 @@ func GetFlashSize(dev io.ReadWriter) (error, uint16, uint16) {
 	readBuf := make([]byte, 64)
 	_, err = dev.Read(readBuf)
 	if err != nil {
+		if err.Error() == "read operation timed out" || err.Error() == "timeout" {
+			return errors.New("communication timeout: device is unresponsive or not in bootloader mode"), 0, 0
+		}
 		return err, 0, 0
 	}
 
@@ -335,8 +381,17 @@ func CleanFlash(dev io.ReadWriter, arrayID byte) error {
 		return err
 	}
 
-	readBuf := make([]byte, 0)
+	time.Sleep(time.Millisecond * 20)
+
+	readBuf := make([]byte, 64)
 	_, err = dev.Read(readBuf)
+	if err != nil {
+		if err.Error() == "read operation timed out" || err.Error() == "timeout" {
+			return errors.New("communication timeout: device is unresponsive or not in bootloader mode")
+		}
+		return err
+	}
+
 	val, err := ParseCreateGetFlashSizeCmdResult(readBuf)
 	if err != nil {
 		return err
@@ -349,7 +404,16 @@ func CleanFlash(dev io.ReadWriter, arrayID byte) error {
 			return err
 		}
 
+		time.Sleep(time.Millisecond * 20)
+
 		_, err = dev.Read(readBuf)
+		if err != nil {
+			if err.Error() == "read operation timed out" || err.Error() == "timeout" {
+				return errors.New("communication timeout: device is unresponsive or not in bootloader mode")
+			}
+			return err
+		}
+
 		if !ParseEraseRowCmdResult(readBuf) {
 			return errors.New(fmt.Sprintf("Error erasing row number: %d ", i))
 		}

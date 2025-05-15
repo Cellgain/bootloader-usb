@@ -1,9 +1,12 @@
 package usb
 
 import (
+	"context"
+	"errors"
 	"github.com/google/gousb"
 	log "github.com/sirupsen/logrus"
 	"io"
+	"time"
 )
 
 type Device struct {
@@ -72,16 +75,36 @@ func (d *Device) Write(b []byte) (int, error) {
 }
 
 func (d *Device) Read(buf []byte) (int, error) {
-	readBytes, err := d.epIn.Read(buf)
-	if err != nil {
-		return readBytes, err
-	}
+	// Create a context with a 1-second timeout
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 
-	if readBytes == 0 {
-		return readBytes, nil
+	// Create a channel to receive the result of the read operation
+	type readResult struct {
+		n   int
+		err error
 	}
+	resultCh := make(chan readResult, 1)
 
-	return readBytes, nil
+	// Start the read operation in a goroutine
+	go func() {
+		readBytes, err := d.epIn.Read(buf)
+		resultCh <- readResult{readBytes, err}
+	}()
+
+	// Wait for either the read operation to complete or the timeout to expire
+	select {
+	case result := <-resultCh:
+		if result.err != nil {
+			return result.n, result.err
+		}
+		if result.n == 0 {
+			return result.n, nil
+		}
+		return result.n, nil
+	case <-ctx.Done():
+		return 0, errors.New("read operation timed out")
+	}
 }
 
 func (d *Device) CheckDev() bool {
