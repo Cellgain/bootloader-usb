@@ -21,28 +21,31 @@ func FindHIDDevice(serial string) (*HIDDevice, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutContext)
 	defer cancel()
 
-	// Retry loop with context cancellation support
-	ticker := time.NewTicker(retryDelay)
-	defer ticker.Stop()
-
+	// First attempt: try immediately, subsequent attempts: wait for delay
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		select {
-		case <-ctx.Done():
-			return nil, fmt.Errorf("HID device search timed out after %v", timeoutContext)
-		case <-ticker.C:
-			// Try to find device
+		if attempt == 1 {
+			// First attempt without delay
 			device, err := findMatchingHIDDevice(serial)
 			if err != nil {
-				// Log error but continue retrying
 				slog.Warn("Failed to find HID device", "error", err, "attempt", attempt, "serial", serial)
 			}
 			if device != nil {
 				return device, nil
 			}
+			continue
+		}
 
-			// Don't wait on the last attempt
-			if attempt == maxRetries {
-				break
+		// Subsequent attempts with delay
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("HID device search timed out after %v", timeoutContext)
+		case <-time.After(retryDelay):
+			device, err := findMatchingHIDDevice(serial)
+			if err != nil {
+				slog.Warn("Failed to find HID device", "error", err, "attempt", attempt, "serial", serial)
+			}
+			if device != nil {
+				return device, nil
 			}
 		}
 	}
@@ -111,7 +114,7 @@ func IsHIDDeviceAvailable(serial string) bool {
 	// Check if the expected device path exists
 	if _, err := os.Stat(expectedPath); err == nil {
 		// Try to open it to verify it's accessible
-		file, err := os.OpenFile(expectedPath, os.O_RDWR, 0)
+		file, err := os.OpenFile(expectedPath, os.O_RDWR, 0600)
 		if err == nil {
 			file.Close()
 			return true

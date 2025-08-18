@@ -3,7 +3,7 @@ package cyacdParse
 import (
 	"bufio"
 	"encoding/hex"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 	"os"
 )
 
@@ -65,7 +65,7 @@ func (c *Cyacd) parseHeader() error {
 
 func (c *Cyacd) close() {
 	if e := c.file.Close(); e != nil {
-		log.Debug(e)
+		slog.Debug("Failed to close cyacd file", "error", e)
 	}
 }
 
@@ -79,7 +79,7 @@ func (c *Cyacd) ParseRowData() []*Row {
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Debug(err)
+		slog.Debug("Scanner error while parsing row data", "error", err)
 	}
 	return r
 }

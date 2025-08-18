@@ -8,8 +8,15 @@
       "Bash(./bootloader-usb -h)",
       "Bash(./bootloader-usb:*)",
       "Bash(rm:*)",
-      "Bash(go vet:*)"
+      "Bash(go vet:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh api:*)",
+      "Bash(go mod:*)"
     ],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "acceptEdits",
+    "additionalDirectories": [
+      "/usr/local/go/bin",
+      "/opt/homebrew/bin"
+    ]
   }
 }

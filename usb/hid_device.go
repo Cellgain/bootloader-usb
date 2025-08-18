@@ -81,7 +81,7 @@ func (d *HIDDevice) IsDeviceBusy() bool {
 	}
 
 	// Try to open the device to check if it's available
-	file, err := os.OpenFile(d.path, os.O_RDWR, 0)
+	file, err := os.OpenFile(d.path, os.O_RDWR, 0600)
 	if err != nil {
 		return true
 	}
@@ -110,7 +110,7 @@ func (d *HIDDevice) Init() error {
 	}
 
 	// Open the HID device
-	file, err := os.OpenFile(d.path, os.O_RDWR, 0)
+	file, err := os.OpenFile(d.path, os.O_RDWR, 0600)
 	if err != nil {
 		return fmt.Errorf("failed to open HID device %s: %w", d.path, err)
 	}

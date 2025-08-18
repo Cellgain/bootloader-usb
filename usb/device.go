@@ -27,6 +27,11 @@ type Device struct {
 
 	// Configuration
 	config DeviceConfig
+
+	// Performance optimization for IsDeviceBusy
+	lastBusyCheck          time.Time
+	busyCheckCache         bool
+	busyCheckCacheDuration time.Duration
 }
 
 // DeviceConfig holds configuration options for the Device
@@ -74,9 +79,10 @@ func NewDeviceWithConfig(dev *gousb.Device, ctx *gousb.Context, config DeviceCon
 	}
 
 	return &Device{
-		dev:    dev,
-		ctx:    ctx,
-		config: config,
+		dev:                    dev,
+		ctx:                    ctx,
+		config:                 config,
+		busyCheckCacheDuration: 500 * time.Millisecond, // Cache busy check for 500ms
 	}, nil
 }
 
@@ -94,7 +100,29 @@ func (d *Device) IsDeviceBusy() bool {
 		return false
 	}
 
-	return d.isDeviceBusyUnsafe()
+	// Use cached result if available and not expired
+	now := time.Now()
+	if !d.lastBusyCheck.IsZero() && now.Sub(d.lastBusyCheck) < d.busyCheckCacheDuration {
+		return d.busyCheckCache
+	}
+
+	// Perform expensive check and cache result
+	d.mu.RUnlock()
+	d.mu.Lock()
+	defer func() {
+		d.mu.Unlock()
+		d.mu.RLock()
+	}()
+
+	// Double-check after acquiring write lock
+	if !d.lastBusyCheck.IsZero() && now.Sub(d.lastBusyCheck) < d.busyCheckCacheDuration {
+		return d.busyCheckCache
+	}
+
+	result := d.isDeviceBusyUnsafe()
+	d.busyCheckCache = result
+	d.lastBusyCheck = now
+	return result
 }
 
 // CheckKernelDriver checks if a kernel driver is attached and attempts to detach it if needed

@@ -27,28 +27,31 @@ func FindDevice(serial string) (*Device, error) {
 	vendorID := gousb.ID(VendorId)
 	productID := gousb.ID(ProductId)
 
-	// Retry loop with context cancellation support
-	ticker := time.NewTicker(retryDelay)
-	defer ticker.Stop()
-
+	// First attempt: try immediately, subsequent attempts: wait for ticker
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		select {
-		case <-ctx.Done():
-			return nil, fmt.Errorf("device search timed out after %v", timeoutContext)
-		case <-ticker.C:
-			// Try to find devices
+		if attempt == 1 {
+			// First attempt without delay
 			device, err := findMatchingDevice(serial, vendorID, productID)
 			if err != nil {
-				// Log error but continue retrying
 				slog.Warn("Failed to find device", "error", err, "attempt", attempt)
 			}
 			if device != nil {
 				return device, nil
 			}
+			continue
+		}
 
-			// Don't wait on the last attempt
-			if attempt == maxRetries {
-				break
+		// Subsequent attempts with delay
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("device search timed out after %v", timeoutContext)
+		case <-time.After(retryDelay):
+			device, err := findMatchingDevice(serial, vendorID, productID)
+			if err != nil {
+				slog.Warn("Failed to find device", "error", err, "attempt", attempt)
+			}
+			if device != nil {
+				return device, nil
 			}
 		}
 	}
