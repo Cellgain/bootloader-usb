@@ -19,6 +19,7 @@ import (
 const (
 	ModeSerial = "serial"
 	ModeUSB    = "usb"
+	ModeHID    = "hid"
 
 	PacketSize = 64
 	AppVersion = "1.0.0"
@@ -37,20 +38,17 @@ const (
 	EventProgrammingComplete = "programming.complete"
 
 	// Verification events
-	EventVerificationStart    = "verification.start"
 	EventVerificationComplete = "verification.complete"
 
 	// Error events
-	EventError              = "error"
-	EventCommunicationError = "error.communication"
-	EventValidationError    = "error.validation"
+	EventError           = "error"
+	EventValidationError = "error.validation"
 
 	// Error code constants
 	ErrorCodeParamValidation  = "ERR_PARAM_VALIDATION"
 	ErrorCodeDeviceNotFound   = "ERR_DEVICE_NOT_FOUND"
 	ErrorCodeCommunication    = "ERR_COMMUNICATION"
 	ErrorCodeProgramming      = "ERR_PROGRAMMING"
-	ErrorCodeVerification     = "ERR_VERIFICATION"
 	ErrorCodeDeviceMismatch   = "ERR_DEVICE_MISMATCH"
 	ErrorCodeOutOfRange       = "ERR_OUT_OF_RANGE"
 	ErrorCodeChecksumMismatch = "ERR_CHECKSUM_MISMATCH"
@@ -103,9 +101,9 @@ func main() {
 	startTime := time.Now()
 
 	filePath := flag.String("path", "", "Path for the .cyacd file")
-	serial := flag.String("serial", "", "Serial for the device. Only required for USB communication")
+	serial := flag.String("serial", "", "Serial for the device. Required for USB and HID communication")
 	port := flag.String("port", "", "Port for the communication. Example: /dev/ttyACM0. Only required for serial communication")
-	mode := flag.String("mode", "", "Mode of communication: usb or serial")
+	mode := flag.String("mode", "", "Mode of communication: usb, serial, or hid")
 	key := flag.String("key", "", "Bootloader key")
 	restart := flag.Bool("restart", false, "Restart the device after programming")
 
@@ -156,8 +154,23 @@ func main() {
 				"error_code", ErrorCodeDeviceNotFound)
 			os.Exit(1)
 		} else {
-			devUSB.Init()
+			err = devUSB.Init()
+			checkError(err, "Error initializing USB device", ErrorCodeDeviceNotFound)
 			peripheral = io.ReadWriteCloser(devUSB)
+		}
+		break
+	case ModeHID:
+		devHID, err := usb.FindHIDDevice(*serial)
+		checkError(err, "Error finding HID device", ErrorCodeDeviceNotFound)
+
+		if devHID == nil {
+			logEvent(slog.LevelError, EventError, "HID device not found",
+				"error_code", ErrorCodeDeviceNotFound)
+			os.Exit(1)
+		} else {
+			err = devHID.Init()
+			checkError(err, "Error initializing HID device", ErrorCodeDeviceNotFound)
+			peripheral = io.ReadWriteCloser(devHID)
 		}
 		break
 	}
@@ -232,7 +245,7 @@ func main() {
 					transactionPeripheral(frame)
 
 					if cybootloader_protocol.ParseProgramRowCmdResult(readBuf) {
-						//log.Info("Row flashed")
+						// log.Info("Row flashed")
 						checksum := r.Checksum() + r.ArrayID() + byte(r.RowNum()>>8) + byte(r.RowNum()) + byte(r.Size()) + byte(r.Size()>>8)
 
 						frame = cybootloader_protocol.CreateGetRowChecksumCmd(r.ArrayID(), r.RowNum())
@@ -245,7 +258,7 @@ func main() {
 							checkError(errors.New("[ERROR] The checksum does not match the expected value"), "Checksum mismatch error", ErrorCodeChecksumMismatch)
 						}
 
-						//log.Info("Row Checksum passed")
+						// log.Info("Row Checksum passed")
 					}
 				} else {
 					checkError(errors.New("[ERROR] There was an error during the programming of the device"), "Programming error", ErrorCodeProgramming)
@@ -298,8 +311,8 @@ func validateParams(mode, filePath, port, key, serial string) {
 			"error_code", ErrorCodeParamValidation)
 		flag.PrintDefaults()
 		os.Exit(1)
-	} else if mode != ModeSerial && mode != ModeUSB {
-		logEvent(slog.LevelError, EventValidationError, "Mode must be serial or usb.",
+	} else if mode != ModeSerial && mode != ModeUSB && mode != ModeHID {
+		logEvent(slog.LevelError, EventValidationError, "Mode must be serial, usb, or hid.",
 			"error_code", ErrorCodeParamValidation)
 		flag.PrintDefaults()
 		os.Exit(1)
@@ -310,8 +323,8 @@ func validateParams(mode, filePath, port, key, serial string) {
 			flag.PrintDefaults()
 			os.Exit(1)
 		}
-		if mode == ModeUSB && serial == "" {
-			logEvent(slog.LevelError, EventValidationError, "Serial is required for usb mode.",
+		if (mode == ModeUSB || mode == ModeHID) && serial == "" {
+			logEvent(slog.LevelError, EventValidationError, "Serial is required for usb and hid modes.",
 				"error_code", ErrorCodeParamValidation)
 			flag.PrintDefaults()
 			os.Exit(1)
@@ -336,7 +349,7 @@ func checkError(err error, message string, errorCode ...string) {
 func readPeripheral() {
 	readBuf = make([]byte, PacketSize)
 	_, err := peripheral.Read(readBuf)
-	//log.Printf("Read %d bytes", n)
+	// log.Printf("Read %d bytes", n)
 	if err != nil {
 		if err.Error() == "read operation timed out" || err.Error() == "timeout" {
 			checkError(err, "Communication timeout: device is unresponsive or not in bootloader mode", ErrorCodeCommunication)
@@ -348,7 +361,7 @@ func readPeripheral() {
 
 func writePeripheral(frame []byte) {
 	_, err := peripheral.Write(frame)
-	//log.Printf("Write %d bytes", n)
+	// log.Printf("Write %d bytes", n)
 	checkError(err, "Error writing frame", ErrorCodeCommunication)
 
 	return
@@ -357,7 +370,7 @@ func writePeripheral(frame []byte) {
 func transactionPeripheral(frame []byte) {
 	// send frame
 	writePeripheral(frame)
-	time.Sleep(time.Millisecond * 25)
+	time.Sleep(time.Millisecond)
 	// read response
 	readPeripheral()
 }

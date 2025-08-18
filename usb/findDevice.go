@@ -1,11 +1,12 @@
 package usb
 
 import (
-	"errors"
+	"context"
 	"fmt"
-	"github.com/google/gousb"
-	"github.com/sirupsen/logrus"
+	"log/slog"
 	"time"
+
+	"github.com/google/gousb"
 )
 
 const (
@@ -14,46 +15,102 @@ const (
 )
 
 func FindDevice(serial string) (*Device, error) {
-	// Iterate through available Devices, finding all that match a known VID/PID.
-	var err error
-	devs := make([]*gousb.Device, 0)
-	i := 0
-	ticker := time.NewTicker(time.Millisecond * 200)
-	defer ticker.Stop()
+	const (
+		maxRetries     = 10
+		retryDelay     = 200 * time.Millisecond
+		timeoutContext = 5 * time.Second
+	)
 
-	for {
-		select {
-		case <-ticker.C:
-			i++
-			ctx := gousb.NewContext()
-			devs, err = ctx.OpenDevices(func(desc *gousb.DeviceDesc) bool {
-				return desc.Vendor == gousb.ID(VendorId) && desc.Product == gousb.ID(ProductId)
-			})
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutContext)
+	defer cancel()
 
-			ctx.Close()
+	vendorID := gousb.ID(VendorId)
+	productID := gousb.ID(ProductId)
 
+	// First attempt: try immediately, subsequent attempts: wait for ticker
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		if attempt == 1 {
+			// First attempt without delay
+			device, err := findMatchingDevice(serial, vendorID, productID)
 			if err != nil {
-				logrus.WithError(err).Error("OpenDevices()")
+				slog.Warn("Failed to find device", "error", err, "attempt", attempt)
+			}
+			if device != nil {
+				return device, nil
+			}
+			continue
+		}
+
+		// Subsequent attempts with delay
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("device search timed out after %v", timeoutContext)
+		case <-time.After(retryDelay):
+			device, err := findMatchingDevice(serial, vendorID, productID)
+			if err != nil {
+				slog.Warn("Failed to find device", "error", err, "attempt", attempt)
+			}
+			if device != nil {
+				return device, nil
 			}
 		}
-
-		if len(devs) > 0 || i > 10 {
-			break
-		}
 	}
+
+	return nil, fmt.Errorf("no devices found matching VID %04X, PID %04X, and serial %s after %d attempts",
+		vendorID, productID, serial, maxRetries)
+}
+
+// findMatchingDevice encapsulates the device discovery and matching logic
+func findMatchingDevice(serial string, vendorID, productID gousb.ID) (*Device, error) {
+	ctx := gousb.NewContext()
+
+	devs, err := ctx.OpenDevices(func(desc *gousb.DeviceDesc) bool {
+		return desc.Vendor == vendorID && desc.Product == productID
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to open devices: %w", err)
+	}
+
+	// Ensure all devices are closed except the one we return
+	defer func() {
+		for _, dev := range devs {
+			if dev != nil {
+				dev.Close()
+			}
+		}
+	}()
 
 	if len(devs) == 0 {
-		return nil, errors.New(fmt.Sprintf("no devices found matching VID %s and PID %s", gousb.ID(VendorId), gousb.ID(ProductId)))
+		return nil, nil // No devices found, but no error
 	}
 
-	for idx, _ := range devs {
-		if s, err := devs[idx].SerialNumber(); s == serial {
-			return NewDevice(devs[idx])
-		} else if err != nil {
-			return nil, err
+	// Find device with matching serial number
+	for _, dev := range devs {
+		if dev == nil {
+			continue
 		}
-		devs[idx].Close()
+
+		deviceSerial, err := dev.SerialNumber()
+		if err != nil {
+			slog.Warn("Failed to get device serial number", "error", err)
+			continue
+		}
+
+		if deviceSerial == serial {
+			// Create a copy of the device pointer to avoid closing it in defer
+			matchedDev := dev
+
+			// Mark this device as nil in the slice so it won't be closed by defer
+			for i, d := range devs {
+				if d == dev {
+					devs[i] = nil
+					break
+				}
+			}
+
+			return NewDevice(matchedDev, ctx)
+		}
 	}
 
-	return nil, errors.New(fmt.Sprintf("no devices found matching Serial %s", serial))
+	return nil, nil // No matching device found
 }
