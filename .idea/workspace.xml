@@ -5,7 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c23bb4e4-6603-4686-9fb8-fdd41af1df24" name="Default Changelist" comment="Replace logrus with slog and enhance structured logging&#10;&#10;Replaced the logrus logging library with slog for better integration with modern structured logging practices. Introduced standardized logging across the application, added event-based logging constants, and detailed error codes for improved traceability. Enhanced clarity by removing the custom progress bar in favor of event-driven updates.">
+      <change afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/usb/device.go" beforeDir="false" afterPath="$PROJECT_DIR$/usb/device.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/usb/findDevice.go" beforeDir="false" afterPath="$PROJECT_DIR$/usb/findDevice.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -133,7 +140,7 @@
     &quot;settings.editor.selected.configurable&quot;: &quot;go.vgo&quot;
   }
 }</component>
-  <component name="RunManager" selected="Shell Script.build arm64">
+  <component name="RunManager" selected="Shell Script.build arm7">
     <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="bootloader-usb" />
       <working_directory value="$PROJECT_DIR$/" />
