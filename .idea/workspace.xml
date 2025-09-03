@@ -5,14 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c23bb4e4-6603-4686-9fb8-fdd41af1df24" name="Default Changelist" comment="Add HID support to bootloader application&#10;&#10;- Introduced HID communication mode, supporting USB HID devices.&#10;- Added `ModeHID` constant and logic enhancements in `main.go`.&#10;- Created `hid_device.go` for managing HID devices.&#10;- Implemented device discovery in `findHIDDevice.go`.&#10;- Enhanced `findDevice.go` for improved USB device discovery.&#10;- Updated dependencies in `go.mod` and `go.sum`.">
-      <change beforePath="$PROJECT_DIR$/.claude/settings.local.json" beforeDir="false" afterPath="$PROJECT_DIR$/.claude/settings.local.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cyacdParse/parse.go" beforeDir="false" afterPath="$PROJECT_DIR$/cyacdParse/parse.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/usb/device.go" beforeDir="false" afterPath="$PROJECT_DIR$/usb/device.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/usb/findDevice.go" beforeDir="false" afterPath="$PROJECT_DIR$/usb/findDevice.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/usb/findHIDDevice.go" beforeDir="false" afterPath="$PROJECT_DIR$/usb/findHIDDevice.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/usb/hid_device.go" beforeDir="false" afterPath="$PROJECT_DIR$/usb/hid_device.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -126,7 +121,7 @@
     "WebServerToolWindowFactoryState": "false",
     "configurable..is.expanded": "false",
     "configurable.GoLibrariesConfigurable.is.expanded": "true",
-    "git-widget-placeholder": "#3 on hidMode",
+    "git-widget-placeholder": "#4 on development",
     "go.import.settings.migrated": "true",
     "go.sdk.automatically.set": "true",
     "ignore.virus.scanning.warn.message": "true",
@@ -141,7 +136,7 @@
     "to.speed.mode.migration.done": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Shell Script.build arm7">
+  <component name="RunManager" selected="Shell Script.build arm64">
     <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="bootloader-usb" />
       <working_directory value="$PROJECT_DIR$/" />
@@ -193,7 +188,7 @@
       <method v="2" />
     </configuration>
     <configuration name="build arm64" type="ShConfigurationType">
-      <option name="SCRIPT_TEXT" value="docker run --rm -v ${PWD}:/usr/src/myapp -w /usr/src/myapp -e CGO_ENABLED=1 -e CC=aarch64-linux-gnu-gcc -e GOOS=linux -e GOARCH=arm64 -e PKG_CONFIG_PATH=/usr/local/aarch64-linux-gnu/lib/pkgconfig -e LD_LIBRARY_PATH=/usr/local/aarch64-linux-gnu/lib ghcr.io/cellgain/arm7_aarch64_image:latest go build -v -o ./bin/bootloader-usb-arm64 bootloader-usb" />
+      <option name="SCRIPT_TEXT" value="docker run --rm -v ${PWD}:/usr/src/myapp -w /usr/src/myapp -e CGO_ENABLED=1 -e CC=aarch64-linux-gnu-gcc -e GOOS=linux -e GOARCH=arm64 -e PKG_CONFIG_PATH=/usr/local/aarch64-linux-gnu/lib/pkgconfig -e LD_LIBRARY_PATH=/usr/local/aarch64-linux-gnu/lib arm7_aarch64_image:latest go build -v -o ./bin/bootloader-usb-arm64 bootloader-usb" />
       <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
       <option name="SCRIPT_PATH" value="" />
       <option name="SCRIPT_OPTIONS" value="" />
@@ -208,7 +203,7 @@
       <method v="2" />
     </configuration>
     <configuration name="build arm7" type="ShConfigurationType">
-      <option name="SCRIPT_TEXT" value="docker run --rm -v ${PWD}:/usr/src/myapp -w /usr/src/myapp -e CGO_ENABLED=1 -e CC=arm-linux-gnueabihf-gcc -e GOOS=linux -e GOARM=7 -e GOARCH=arm -e PKG_CONFIG_PATH=/usr/local/arm-linux-gnueabihf/lib/pkgconfig ghcr.io/cellgain/arm7_aarch64_image:latest go build -v -o ./bin/bootloader-usb-arm7 bootloader-usb" />
+      <option name="SCRIPT_TEXT" value="docker run --rm -v ${PWD}:/usr/src/myapp -w /usr/src/myapp -e CGO_ENABLED=1 -e CC=arm-linux-gnueabihf-gcc -e GOOS=linux -e GOARM=7 -e GOARCH=arm -e PKG_CONFIG_PATH=/usr/local/arm-linux-gnueabihf/lib/pkgconfig arm7_aarch64_image:latest go build -v -o ./bin/bootloader-usb-arm7 bootloader-usb" />
       <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
       <option name="SCRIPT_PATH" value="" />
       <option name="SCRIPT_OPTIONS" value="" />
@@ -232,8 +227,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-gosdk-f466f9b0953e-3d2cccfc42a2-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-252.23892.449" />
-        <option value="bundled-js-predefined-d6986cc7102b-e03c56caf84a-JavaScript-GO-252.23892.449" />
+        <option value="bundled-gosdk-f466f9b0953e-3d2cccfc42a2-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-252.23892.530" />
+        <option value="bundled-js-predefined-d6986cc7102b-e03c56caf84a-JavaScript-GO-252.23892.530" />
       </set>
     </attachedChunks>
   </component>
